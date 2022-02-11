@@ -43,5 +43,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log("Example App Port", port)
+    console.log("Sigma Central Hospital Server Port", port)
 });
