@@ -20,6 +20,7 @@ async function run() {
         const database = client.db('sigma_central');
         const commonityCollection = database.collection('commonity');
         const userCollection = database.collection('users');
+        const doctorCollection = database.collection('doctors');
         // const userReview = database.collection('user_review');
         // const userOrder = database.collection('user_order');
 
@@ -29,6 +30,12 @@ async function run() {
             const commonity = await cursor.toArray();
             res.send(commonity);
         });
+
+        app.get('/doctors', async (req, res) => {
+            const doctor = doctorCollection.find({});
+            const result = await doctor.toArray();
+            res.send(result);
+        })
 
     }
     finally {
