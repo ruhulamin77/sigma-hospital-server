@@ -21,7 +21,7 @@ async function run() {
         const commonityCollection = database.collection('commonity');
         const userCollection = database.collection('users');
         const doctorCollection = database.collection('doctors');
-        // const userReview = database.collection('user_review');
+        const medicineCollection = database.collection('medicine');
         // const userOrder = database.collection('user_order');
 
         // Get Service API
@@ -30,13 +30,18 @@ async function run() {
             const commonity = await cursor.toArray();
             res.send(commonity);
         });
-
+        // Doctor Api
         app.get('/doctors', async (req, res) => {
             const doctor = doctorCollection.find({});
             const result = await doctor.toArray();
             res.send(result);
-        })
-
+        });
+        // Medicine Api
+        app.get('/medicine', async (req, res) => {
+            const medicine = medicineCollection.find({});
+            const result = await medicine.toArray();
+            res.send(result);
+        });
     }
     finally {
         // await client.close();
