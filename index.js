@@ -32,6 +32,7 @@ async function run() {
             const commonity = await cursor.toArray();
             res.send(commonity);
         });
+
         // post doctor api
         app.post('/addDoctor', async (req, res) => {
             const { name, experience, birthday, gender, phone, speciality, email, twitter, facebook, linkedin, address, eduLine1, eduLine2, eduLine3, awardFirst, awardSecond, awardThird } = req.body;
@@ -52,6 +53,7 @@ async function run() {
             const result = await doctor.toArray();
             res.send(result);
         });
+
         // delete a single doctor
         app.delete('/doctors/:id', async (req, res) => {
             const id = req.params.id;
@@ -59,6 +61,33 @@ async function run() {
             const result = await doctorCollection.deleteOne(query);
             res.send(result);
         })
+
+        // update doctor api
+        app.put('/updateDoctor/:id', async (req, res) => {
+            const id = req.params.id;
+            const { title, description, day, time, shift, skill1, skill2, skill3, percent1, percent2, percent3, moto } = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateFile = {
+                $set: {
+                    title: title,
+                    description: description,
+                    day: day,
+                    time: time,
+                    shift: shift,
+                    skill1: skill1,
+                    skill2: skill2,
+                    skill3: skill3,
+                    percent1: percent1,
+                    percent2: percent2,
+                    percent3: percent3,
+                    moto: moto
+                },
+            };
+            const result = await doctorCollection.updateOne(filter, updateFile, options)
+            res.send(result);
+        })
+
         // Medicine Api
         app.get('/medicine', async (req, res) => {
             const medicine = medicineCollection.find({});
