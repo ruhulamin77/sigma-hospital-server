@@ -52,6 +52,13 @@ async function run() {
             const result = await doctor.toArray();
             res.send(result);
         });
+        // delete a single doctor
+        app.delete('/doctors/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await doctorCollection.deleteOne(query);
+            res.send(result);
+        })
         // Medicine Api
         app.get('/medicine', async (req, res) => {
             const medicine = medicineCollection.find({});
