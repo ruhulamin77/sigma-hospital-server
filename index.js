@@ -94,6 +94,14 @@ async function run() {
             const result = await medicine.toArray();
             res.send(result);
         });
+        // Create Users By Email PassWord 
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await userCollection.insertOne(user);
+            console.log(result);
+            res.json(result)
+        });
+
     }
     finally {
         // await client.close();
