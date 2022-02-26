@@ -65,11 +65,29 @@ async function run() {
         // update doctor api
         app.put('/updateDoctor/:id', async (req, res) => {
             const id = req.params.id;
-            const { title, description, day, time, shift, skill1, skill2, skill3, percent1, percent2, percent3, moto } = req.body;
+            const { name, experience, birthday, gender, phone, speciality, email, twitter, linkedin, facebook, address, eduLine1, eduLine2, eduLine3, awardFirst, awardSecond, awardThird, title, description, day, time, shift, skill1, skill2, skill3, percent1, percent2, percent3, moto } = req.body;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updateFile = {
                 $set: {
+
+                    name: name,
+                    experience: experience,
+                    birthday: birthday,
+                    gender: gender,
+                    phone: phone,
+                    speciality: speciality,
+                    email: email,
+                    twitter: twitter,
+                    linkedin: linkedin,
+                    facebook: facebook,
+                    address: address,
+                    eduLine1: eduLine1,
+                    eduLine2: eduLine2,
+                    eduLine3: eduLine3,
+                    awardFirst: awardFirst,
+                    awardSecond: awardSecond,
+                    awardThird: awardThird,
                     title: title,
                     description: description,
                     day: day,
@@ -81,7 +99,8 @@ async function run() {
                     percent1: percent1,
                     percent2: percent2,
                     percent3: percent3,
-                    moto: moto
+                    moto: moto,
+
                 },
             };
             const result = await doctorCollection.updateOne(filter, updateFile, options)
