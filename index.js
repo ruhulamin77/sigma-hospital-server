@@ -121,11 +121,20 @@ async function run() {
             const result = await medicine.toArray();
             res.send(result);
         });
-        // Create Users By Email PassWord 
+        // Create Users By Email PassWord [Firebase]
         app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await userCollection.insertOne(user);
             console.log(result);
+            res.json(result)
+        });
+        // Create And Update Users by Google Login [Firebase]
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const find = { email: user.email };
+            const option = { upsert: true };
+            const updateDoc = { $set: user }
+            const result = await userCollection.updateOne(find, updateDoc, option);
             res.json(result)
         });
 
