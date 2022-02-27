@@ -24,6 +24,7 @@ async function run() {
         const userCollection = database.collection('users');
         const doctorCollection = database.collection('doctors');
         const medicineCollection = database.collection('medicine');
+        const prescriptionCollection = database.collection('prescription');
         // const userOrder = database.collection('user_order');
 
         // Get Service API
@@ -121,6 +122,21 @@ async function run() {
             const result = await medicine.toArray();
             res.send(result);
         });
+
+        // post prescription api
+        app.post('/prescription', async (req, res) => {
+            const prescription = req.body;
+            const result = await prescriptionCollection.insertOne(prescription);
+            res.send(result);
+        })
+
+        // get all prescription data
+        app.get('/prescription', async (req, res) => {
+            const allprescription = prescriptionCollection.find({});
+            const result = await allprescription.toArray();
+            res.send(result);
+        })
+
         // Create Users By Email PassWord 
         app.post('/users', async (req, res) => {
             const user = req.body;
