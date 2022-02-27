@@ -116,6 +116,13 @@ async function run() {
             res.send(result);
         })
 
+        // post medicine api
+        app.post('/medicine', async (req, res) => {
+            const medicine = req.body;
+            const result = await medicineCollection.insertOne(medicine);
+            res.send(result);
+        })
+
         // Medicine Api
         app.get('/medicine', async (req, res) => {
             const medicine = medicineCollection.find({});
