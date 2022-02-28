@@ -160,6 +160,14 @@ async function run() {
             const result = await userCollection.updateOne(find, updateDoc, option);
             res.json(result)
         });
+        // Farid
+          // Create Users By Email PassWord [Firebase]
+        app.get("/users", async (req, res) => {
+            const result = await userCollection.find({}).toArray()
+        })
+
+
+        // farid
 
     }
     finally {
