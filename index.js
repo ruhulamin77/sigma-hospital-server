@@ -22,6 +22,7 @@ async function run() {
         const database = client.db('sigma_central');
         const commonityCollection = database.collection('commonity');
         const userCollection = database.collection('users');
+        const patientsCollection = database.collection('patients');
         const doctorCollection = database.collection('doctors');
         const medicineCollection = database.collection('medicine');
         const prescriptionCollection = database.collection('prescription');
@@ -33,7 +34,9 @@ async function run() {
             const commonity = await cursor.toArray();
             res.send(commonity);
         });
-
+        /*======================================================
+                        Doctors Section Starts
+        ========================================================*/
         // post doctor api
         app.post('/addDoctor', async (req, res) => {
             const { name, experience, birthday, gender, phone, speciality, email, twitter, facebook, linkedin, address, eduLine1, eduLine2, eduLine3, awardFirst, awardSecond, awardThird } = req.body;
@@ -115,7 +118,12 @@ async function run() {
             const result = await doctorCollection.updateOne(filter, updateFile, options)
             res.send(result);
         })
-
+        /*======================================================
+                        Doctors Section Ends
+        ========================================================*/
+        /*======================================================
+                        Medicine Section Starts
+        ========================================================*/
         // post medicine api
         app.post('/medicine', async (req, res) => {
             const medicine = req.body;
@@ -143,7 +151,25 @@ async function run() {
             const result = await allprescription.toArray();
             res.send(result);
         })
+        /*======================================================
+                        Medicine Section Ends
+        ========================================================*/
+        /*======================================================
+                        User Section Starts
+        ========================================================*/
+        // Get patients From Database
+        app.get('/patients', async (req, res) => {
+            const cursor = patientsCollection.find({});
+            const patients = await cursor.toArray();
+            res.send(patients);
+        });
 
+        // Get Users From Database
+        app.get('/users', async (req, res) => {
+            const cursor = userCollection.find({});
+            const users = await cursor.toArray();
+            res.send(users);
+        });
         // Create Users By Email PassWord [Firebase]
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -160,7 +186,9 @@ async function run() {
             const result = await userCollection.updateOne(find, updateDoc, option);
             res.json(result)
         });
-
+        /*======================================================
+                        Users Section Ends
+        ========================================================*/
     }
     finally {
         // await client.close();
