@@ -195,13 +195,8 @@ async function run() {
         // update doctor api
         app.put('/updateDoctor/:id', async (req, res) => {
             console.log("body", req.body);
-            console.log("files", req.files);
             const id = req.params.id;
             const { name, experience, birthday, gender, phone, speciality, email, twitter, linkedin, facebook, address, eduLine1, eduLine2, eduLine3, awardFirst, awardSecond, awardThird, title, description, day, time, shift, skill1, skill2, skill3, percent1, percent2, percent3, moto } = req.body;
-
-            const image = req.files.image.data;
-            const encodedImg = image.toString('base64');
-            const imageBuffer = Buffer.from(encodedImg, 'base64');
 
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
@@ -236,8 +231,7 @@ async function run() {
                     percent1: percent1,
                     percent2: percent2,
                     percent3: percent3,
-                    moto: moto,
-                    photo: imageBuffer
+                    moto: moto
 
                 },
             };
