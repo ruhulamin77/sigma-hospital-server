@@ -23,7 +23,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 // SSLCommerz payment
-const SSLCommerzPayment = require('sslcommerz')
+// const SSLCommerzPayment = require('sslcommerz')
 
 async function run() {
     try {
@@ -31,6 +31,7 @@ async function run() {
         const database = client.db('sigma_central');
         const commonityCollection = database.collection('commonity');
         const userCollection = database.collection('users');
+        const adminCollection = database.collection('admin_panel');
         const patientsCollection = database.collection('patients');
         const doctorCollection = database.collection('doctors');
         const medicineCollection = database.collection('medicine');
