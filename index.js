@@ -242,6 +242,62 @@ async function run() {
                         Doctors Section Ends
         ========================================================*/
         /*======================================================
+                        Nurse Section Starts
+        ========================================================*/
+        // nurse section start
+        app.post('/addNurse', async (req, res) => {
+            console.log(req.body);
+            console.log(req.files);
+            const { name, description, day, time, shift, email, phone, gender } = req.body;
+            const image = req.files.image.data;
+            const encodedImg = image.toString('base64');
+            const imageBuffer = Buffer.from(encodedImg, 'base64');
+
+            const doctorInfo = {
+                name, description, day, time, shift, email, phone, gender,
+                photo: imageBuffer
+            }
+            const result = await nurseCollection.insertOne(doctorInfo);
+            res.send(result);
+        })
+        app.get('/nurses', async (req, res) => {
+            const nurse = nurseCollection.find({});
+            const result = await nurse.toArray();
+            res.send(result);
+        })
+        app.delete('/nurses/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await nurseCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.put('/updateNurse/:id', async (req, res) => {
+            console.log("body", req.body);
+            const id = req.params.id;
+            const { name, description, day, time, shift, email, phone, gender } = req.body;
+
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateFile = {
+                $set: {
+
+                    name: name,
+                    description: description,
+                    day: day,
+                    time: time,
+                    shift: shift,
+                    email: email,
+                    phone: phone,
+                    gender: gender
+                },
+            };
+            const result = await nurseCollection.updateOne(filter, updateFile, options)
+            res.send(result);
+        })
+        /*======================================================
+                        Nurse Section Ends
+        ========================================================*/
+        /*======================================================
                         Medicine Section Starts
         ========================================================*/
         // post medicine api
