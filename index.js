@@ -22,9 +22,11 @@ async function run() {
         const database = client.db('sigma_central');
         const commonityCollection = database.collection('commonity');
         const userCollection = database.collection('users');
+        const patientsCollection = database.collection('patients');
         const doctorCollection = database.collection('doctors');
         const medicineCollection = database.collection('medicine');
         const prescriptionCollection = database.collection('prescription');
+        const blogCollection = database.collection('blog');
         // const userOrder = database.collection('user_order');
 
         // Get Service API
@@ -34,6 +36,46 @@ async function run() {
             res.send(commonity);
         });
 
+
+
+        // blog post api Farid
+        app.post('/addBlog', async (req, res) => {
+            const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments } = req.body;
+            const image = req.files.image.data;
+            const encodedImg = image.toString('base64');
+            const imageBuffer = Buffer.from(encodedImg, 'base64');
+            const blogInfo = {
+                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType,date, likes, comments,
+                photo: imageBuffer
+            }
+            const result = await blogCollection.insertOne(blogInfo);
+            console.log(result);
+            res.send(result);
+        })
+          // get all doctor 
+          app.get('/Blog', async (req, res) => {
+            const blog = blogCollection.find({});
+            const result = await blog.toArray();
+            res.send(result);
+          });
+        
+        // app.put("/like", async (req, res) => {
+
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        // })
+
+        app.delete('/Blog/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await blogCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // farid
+        /*======================================================
+                        Doctors Section Starts
+        ========================================================*/
         // post doctor api
         app.post('/addDoctor', async (req, res) => {
             const { name, experience, birthday, gender, phone, speciality, email, twitter, facebook, linkedin, address, eduLine1, eduLine2, eduLine3, awardFirst, awardSecond, awardThird } = req.body;
@@ -115,7 +157,12 @@ async function run() {
             const result = await doctorCollection.updateOne(filter, updateFile, options)
             res.send(result);
         })
-
+        /*======================================================
+                        Doctors Section Ends
+        ========================================================*/
+        /*======================================================
+                        Medicine Section Starts
+        ========================================================*/
         // post medicine api
         app.post('/medicine', async (req, res) => {
             const medicine = req.body;
@@ -143,7 +190,25 @@ async function run() {
             const result = await allprescription.toArray();
             res.send(result);
         })
+        /*======================================================
+                        Medicine Section Ends
+        ========================================================*/
+        /*======================================================
+                        User Section Starts
+        ========================================================*/
+        // Get patients From Database
+        app.get('/patients', async (req, res) => {
+            const cursor = patientsCollection.find({});
+            const patients = await cursor.toArray();
+            res.send(patients);
+        });
 
+        // Get Users From Database
+        app.get('/users', async (req, res) => {
+            const cursor = userCollection.find({});
+            const users = await cursor.toArray();
+            res.send(users);
+        });
         // Create Users By Email PassWord [Firebase]
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -160,15 +225,11 @@ async function run() {
             const result = await userCollection.updateOne(find, updateDoc, option);
             res.json(result)
         });
-        // Farid
-          // Create Users By Email PassWord [Firebase]
-        app.get("/users", async (req, res) => {
-            const result = await userCollection.find({}).toArray()
-        })
 
-
-        // farid
-
+        
+        /*======================================================
+                        Users Section Ends
+        ========================================================*/
     }
     finally {
         // await client.close();
