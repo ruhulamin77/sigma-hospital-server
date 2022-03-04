@@ -8,8 +8,6 @@ const jwt = require('jsonwebtoken');
 const secretPass = 'SfrgiefeGefgMewtA'
 require('dotenv').config();
 const { v4: uuidv4 } = require('uuid');
-
-
 const app = express();
 const port = process.env.PORT || 7050;
 const fileUpload = require('express-fileupload');
@@ -278,55 +276,7 @@ async function run() {
         /*======================================================
                         Admin Panel Section Starts
         ========================================================*/
-        // Doctor Account Created By Admin
-        app.post('/adminSign', async (req, res) => {
-            const { adminName, avatar, email, passWord, role } = req.body;
-            if (!email || !passWord || !adminName || !role) {
-                return res.status(422).json({ error: "All Input Fields Are Reqired" })
-            }
-            const adminPanel = await adminCollection.findOne({ email: email })
-            if (adminPanel) {
-                return res.status(422).json({ error: "This Admin Panel Member Already Exists" })
-            }
-            const securePassWord = await bcrypt.hash(passWord, 12)
-            await new Admin({
-                adminName: adminName,
-                email: email,
-                passWord: securePassWord,
-                photoURL: avatar,
-                role: role,
-            }).save()
-            res.status(200).json({ message: "Hay Admin! New Admin Panel Member Successfully Added! Please Login" })
-        });
-        // Doctor login Api
-        app.post('/adminlogin', async (req, res) => {
-            const { email, passWord } = req.body;
-            if (!email || !passWord) {
-                return res.status(422).json({ error: "All Input Fields Are Reqired" })
-            }
-            const doctor = await adminCollection.findOne({ role: "doctor" })
-            if (!doctor) {
-                return res.status(422).json({ error: "Sorry! This Doctor Doesn't Exists." })
-            }
-            const match = await bcrypt.compare(passWord, doctor.passWord)
-            if (match) {
-                const role = jwt.sign({ role: user.role }, secretPass)
-                return res.status(201).json({ role })
-            } else {
-                return res.status(401).json({ error: "Email Or Password is Invalid." })
-            }
-        })
-        // Login Require
-        const requireLogin = (req, res, next) => {
-            const { authorization } = req.headers
-            if (!authorization) {
-                return res.status(401).json({ error: "Sorry! You must be logged in" })
-            }
-            const { role } = jwt.verify(authorization, secretPass)
-            req.user = role
-            next()
-        };
-
+        
         /*======================================================
                         Admin Panel Section Ends
         ========================================================*/
