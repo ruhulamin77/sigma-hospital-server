@@ -27,13 +27,15 @@ async function run() {
         await client.connect();
         const database = client.db('sigma_central');
         const commonityCollection = database.collection('commonity');
+        const patientsCollection = database.collection('patients');
         const blogCollection = database.collection('blog');
         const userCollection = database.collection('users');
         const adminCollection = database.collection('admin_panel');
-        const patientsCollection = database.collection('patients');
         const doctorCollection = database.collection('doctors');
         const medicineCollection = database.collection('medicine');
+        const nurseCollection = database.collection('nurses');
         const prescriptionCollection = database.collection('prescription');
+        const appointmentCollection = database.collection('appointments');
         // const userOrder = database.collection('user_order');
 
         // Create collection
@@ -357,6 +359,24 @@ async function run() {
             const result = await blogCollection.deleteOne(query);
             res.send(result);
         })
+
+        /*======================================================
+                        Appointment Section starts
+        ========================================================*/
+        app.post("/appointments", async (req, res) => {
+        const appointments = req.body;
+        const result = await appointmentCollection.insertOne(appointments);
+        res.send(result);
+        console.log(appointments);
+        });
+        app.get("/appointments", async (req, res) => {
+        const appointments = appointmentCollection.find({});
+        const result = await appointments.toArray();
+        res.send(result);
+        });
+        /*======================================================
+                        Appointment Section ends
+        ========================================================*/
         /*======================================================
                         Admin Panel Section Starts
         ========================================================*/
