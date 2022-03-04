@@ -27,6 +27,7 @@ async function run() {
         await client.connect();
         const database = client.db('sigma_central');
         const commonityCollection = database.collection('commonity');
+        const blogCollection = database.collection('blog');
         const userCollection = database.collection('users');
         const adminCollection = database.collection('admin_panel');
         const patientsCollection = database.collection('patients');
@@ -273,6 +274,33 @@ async function run() {
         /*======================================================
                         Medicine Section Ends
         ========================================================*/
+        // blog post api Farid
+        app.post('/addBlog', async (req, res) => {
+            const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments } = req.body;
+            const image = req.files.image.data;
+            const encodedImg = image.toString('base64');
+            const imageBuffer = Buffer.from(encodedImg, 'base64');
+            const blogInfo = {
+                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType,date, likes, comments,
+                photo: imageBuffer
+            }
+            const result = await blogCollection.insertOne(blogInfo);
+            console.log(result);
+            res.send(result);
+        })
+          // get all doctor 
+          app.get('/Blog', async (req, res) => {
+            const blog = blogCollection.find({});
+            const result = await blog.toArray();
+            res.send(result);
+          });
+
+        app.delete('/Blog/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await blogCollection.deleteOne(query);
+            res.send(result);
+        })
         /*======================================================
                         Admin Panel Section Starts
         ========================================================*/
