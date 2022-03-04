@@ -31,10 +31,8 @@ async function run() {
         const adminCollection = database.collection('admin_panel');
         const patientsCollection = database.collection('patients');
         const doctorCollection = database.collection('doctors');
-        const nurseCollection = database.collection('nurses');
         const medicineCollection = database.collection('medicine');
         const prescriptionCollection = database.collection('prescription');
-        const blogCollection = database.collection('blog');
         // const userOrder = database.collection('user_order');
 
         // Create collection
@@ -161,44 +159,6 @@ async function run() {
             const commonity = await cursor.toArray();
             res.send(commonity);
         });
-
-
-
-        // blog post api Farid
-        app.post('/addBlog', async (req, res) => {
-            const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments } = req.body;
-            const image = req.files.image.data;
-            const encodedImg = image.toString('base64');
-            const imageBuffer = Buffer.from(encodedImg, 'base64');
-            const blogInfo = {
-                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType,date, likes, comments,
-                photo: imageBuffer
-            }
-            const result = await blogCollection.insertOne(blogInfo);
-            console.log(result);
-            res.send(result);
-        })
-          // get all doctor 
-          app.get('/Blog', async (req, res) => {
-            const blog = blogCollection.find({});
-            const result = await blog.toArray();
-            res.send(result);
-          });
-        
-        // app.put("/like", async (req, res) => {
-
-        //     const id = req.params.id;
-        //     const query = { _id: ObjectId(id) };
-        // })
-
-        app.delete('/Blog/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const result = await blogCollection.deleteOne(query);
-            res.send(result);
-        })
-
-        // farid
         /*======================================================
                         Doctors Section Starts
         ========================================================*/
@@ -280,59 +240,6 @@ async function run() {
         /*======================================================
                         Doctors Section Ends
         ========================================================*/
-
-        // nurse section start
-        app.post('/addNurse', async (req, res) => {
-            console.log(req.body);
-            console.log(req.files);
-            const { name, description, day, time, shift, email, phone, gender } = req.body;
-            const image = req.files.image.data;
-            const encodedImg = image.toString('base64');
-            const imageBuffer = Buffer.from(encodedImg, 'base64');
-
-            const doctorInfo = {
-                name, description, day, time, shift, email, phone, gender,
-                photo: imageBuffer
-            }
-            const result = await nurseCollection.insertOne(doctorInfo);
-            res.send(result);
-        })
-        app.get('/nurses', async (req, res) => {
-            const nurse = nurseCollection.find({});
-            const result = await nurse.toArray();
-            res.send(result);
-        })
-        app.delete('/nurses/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const result = await nurseCollection.deleteOne(query);
-            res.send(result);
-        })
-        app.put('/updateNurse/:id', async (req, res) => {
-            console.log("body", req.body);
-            const id = req.params.id;
-            const { name, description, day, time, shift, email, phone, gender } = req.body;
-
-            const filter = { _id: ObjectId(id) };
-            const options = { upsert: true };
-            const updateFile = {
-                $set: {
-
-                    name: name,
-                    description: description,
-                    day: day,
-                    time: time,
-                    shift: shift,
-                    email: email,
-                    phone: phone,
-                    gender: gender
-                },
-            };
-            const result = await nurseCollection.updateOne(filter, updateFile, options)
-            res.send(result);
-        })
-        // nurse section end
-
         /*======================================================
                         Medicine Section Starts
         ========================================================*/
@@ -369,7 +276,58 @@ async function run() {
         /*======================================================
                         Admin Panel Section Starts
         ========================================================*/
-        
+        // Doctor Account Created By Admin
+        app.post('/adminRegistar', async (req, res) => {
+            const { adminName, photoURL , email, passWord, role } = req.body;
+            if (!email || !passWord || !adminName || !role) {
+                return res.status(422).json({ "error": "All Input Fields Are Reqired" })
+            }
+            const adminEmail = await adminCollection.findOne({ email: email })
+            if (adminEmail) {
+                return res.status(422).json({ "error": "This Admin Panel Member Already Exists" })
+            }
+            const securePassWord = await bcrypt.hash(passWord, 12)
+            const data = {
+                adminName: adminName,
+                email: email,
+                passWord: securePassWord,
+                photoURL: photoURL,
+                role: role
+            }
+            const adminMember = await adminCollection.insertOne(data);
+            res.send(adminMember);
+            res.status(200).json({ "message": "Hay Admin! New Admin Panel Member Successfully Added! Please Login" })
+        });
+        // Doctor login Api
+        app.post('/adminLogin', async (req, res) => {
+            console.log(req.body)
+            const { email, passWord } = req.body;
+            if (!email || !passWord) {
+                return res.status(422).json({ "error": "All Input Fields Are Reqired" })
+            }
+            const admin = await adminCollection.findOne({email : email})
+            if (!admin) {
+                return res.status(422).json({ "error": "Sorry! This Doctor Doesn't Exists." })
+            }
+            const match = await bcrypt.compare(passWord, admin.passWord)
+            if (match) {
+                const token = jwt.sign({ admin: admin._id }, secretPass)
+                return res.status(201).json({ token: token, role: admin.role, displayName: admin.adminName, photoURL: admin.photoURL })
+            } else {
+                return res.status(401).json({ "error": "Email Or Password is Invalid." })
+            }
+        })
+        // Login Require
+        const requireLogin = (req, res, next) => {
+            const { authorization } = req.headers
+            if (!authorization) {
+                return res.status(401).json({ "error": "Sorry! You must be logged in" })
+            }
+            const { role } = jwt.verify(authorization, secretPass)
+                req.user = role
+            next()
+        };
+
         /*======================================================
                         Admin Panel Section Ends
         ========================================================*/
@@ -405,8 +363,6 @@ async function run() {
             const result = await userCollection.updateOne(find, updateDoc, option);
             res.json(result)
         });
-
-        
         /*======================================================
                         Users Section Ends
         ========================================================*/
