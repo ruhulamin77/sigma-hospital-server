@@ -31,8 +31,10 @@ async function run() {
         const adminCollection = database.collection('admin_panel');
         const patientsCollection = database.collection('patients');
         const doctorCollection = database.collection('doctors');
+        const nurseCollection = database.collection('nurses');
         const medicineCollection = database.collection('medicine');
         const prescriptionCollection = database.collection('prescription');
+        const blogCollection = database.collection('blog');
         // const userOrder = database.collection('user_order');
 
         // Create collection
@@ -159,6 +161,44 @@ async function run() {
             const commonity = await cursor.toArray();
             res.send(commonity);
         });
+
+
+
+        // blog post api Farid
+        app.post('/addBlog', async (req, res) => {
+            const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments } = req.body;
+            const image = req.files.image.data;
+            const encodedImg = image.toString('base64');
+            const imageBuffer = Buffer.from(encodedImg, 'base64');
+            const blogInfo = {
+                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType,date, likes, comments,
+                photo: imageBuffer
+            }
+            const result = await blogCollection.insertOne(blogInfo);
+            console.log(result);
+            res.send(result);
+        })
+          // get all doctor 
+          app.get('/Blog', async (req, res) => {
+            const blog = blogCollection.find({});
+            const result = await blog.toArray();
+            res.send(result);
+          });
+        
+        // app.put("/like", async (req, res) => {
+
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        // })
+
+        app.delete('/Blog/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await blogCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        // farid
         /*======================================================
                         Doctors Section Starts
         ========================================================*/
@@ -240,6 +280,59 @@ async function run() {
         /*======================================================
                         Doctors Section Ends
         ========================================================*/
+
+        // nurse section start
+        app.post('/addNurse', async (req, res) => {
+            console.log(req.body);
+            console.log(req.files);
+            const { name, description, day, time, shift, email, phone, gender } = req.body;
+            const image = req.files.image.data;
+            const encodedImg = image.toString('base64');
+            const imageBuffer = Buffer.from(encodedImg, 'base64');
+
+            const doctorInfo = {
+                name, description, day, time, shift, email, phone, gender,
+                photo: imageBuffer
+            }
+            const result = await nurseCollection.insertOne(doctorInfo);
+            res.send(result);
+        })
+        app.get('/nurses', async (req, res) => {
+            const nurse = nurseCollection.find({});
+            const result = await nurse.toArray();
+            res.send(result);
+        })
+        app.delete('/nurses/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await nurseCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.put('/updateNurse/:id', async (req, res) => {
+            console.log("body", req.body);
+            const id = req.params.id;
+            const { name, description, day, time, shift, email, phone, gender } = req.body;
+
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateFile = {
+                $set: {
+
+                    name: name,
+                    description: description,
+                    day: day,
+                    time: time,
+                    shift: shift,
+                    email: email,
+                    phone: phone,
+                    gender: gender
+                },
+            };
+            const result = await nurseCollection.updateOne(filter, updateFile, options)
+            res.send(result);
+        })
+        // nurse section end
+
         /*======================================================
                         Medicine Section Starts
         ========================================================*/
@@ -312,6 +405,8 @@ async function run() {
             const result = await userCollection.updateOne(find, updateDoc, option);
             res.json(result)
         });
+
+        
         /*======================================================
                         Users Section Ends
         ========================================================*/
