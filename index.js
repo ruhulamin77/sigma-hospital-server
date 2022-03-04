@@ -1,12 +1,18 @@
-const { MongoClient } = require('mongodb');
-const ObjectId = require("mongodb").ObjectId;
 const express = require('express');
 const cors = require('cors');
-const app = express();
+const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require("mongodb").ObjectId;
+const SSLCommerzPayment = require('sslcommerz')
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const secretPass = 'SfrgiefeGefgMewtA'
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
+
+
+const app = express();
 const port = process.env.PORT || 7050;
 const fileUpload = require('express-fileupload');
-
 
 //Middle Ware
 app.use(cors());
@@ -16,18 +22,140 @@ app.use(fileUpload());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mvbo5.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+// SSLCommerz payment
+
 async function run() {
     try {
         await client.connect();
         const database = client.db('sigma_central');
         const commonityCollection = database.collection('commonity');
         const userCollection = database.collection('users');
+        const adminCollection = database.collection('admin_panel');
         const patientsCollection = database.collection('patients');
         const doctorCollection = database.collection('doctors');
+        const nurseCollection = database.collection('nurses');
         const medicineCollection = database.collection('medicine');
         const prescriptionCollection = database.collection('prescription');
         const blogCollection = database.collection('blog');
         // const userOrder = database.collection('user_order');
+
+        // Create collection
+        const orderCollection = client.db("paymentssl").collection("orders");
+
+        //SSLCommerz Payment initialization Api
+        app.post('/init', async (req, res) => {
+            const data = {
+                total_amount: req.body.total_amount,
+                currency: 'BDT',
+                tran_id: uuidv4(),
+                success_url: 'http://localhost:7050/success',
+                fail_url: 'http://localhost:7050/fail',
+                cancel_url: 'http://localhost:7050/cancel',
+                ipn_url: 'http://localhost:7050/ipn',
+                paymentStatus: 'pending',
+                shipping_method: 'Courier',
+                product_name: req.body.product_name,
+                product_category: 'Electronic',
+                product_profile: req.body.product_profile,
+                cus_name: req.body.cus_name,
+                cus_email: req.body.cus_email,
+                cus_add1: 'Dhaka',
+                cus_add2: 'Dhaka',
+                cus_city: 'Dhaka',
+                cus_state: 'Dhaka',
+                cus_postcode: '1000',
+                cus_country: 'Bangladesh',
+                cus_phone: '01711111111',
+                cus_fax: '01711111111',
+                ship_name: 'Customer Name',
+                ship_add1: 'Dhaka',
+                ship_add2: 'Dhaka',
+                ship_city: 'Dhaka',
+                ship_state: 'Dhaka',
+                ship_postcode: 1000,
+                ship_country: 'Bangladesh',
+                multi_card_name: 'mastercard',
+                value_a: 'ref001_A',
+                value_b: 'ref002_B',
+                value_c: 'ref003_C',
+                value_d: 'ref004_D'
+            };
+
+            // Insert order info
+            const result = await orderCollection.insertOne(data);
+
+            const sslcommer = new SSLCommerzPayment(process.env.STORE_ID, process.env.STORE_PASSWORD, false) //true for live default false for sandbox
+            sslcommer.init(data).then(data => {
+                //process the response that got from sslcommerz 
+                //https://developer.sslcommerz.com/doc/v4/#returned-parameters
+                // console.log(data);
+                const info = { ...productInfo, ...data }
+                // console.log(info.GatewayPageURL);
+                if (info.GatewayPageURL) {
+                    res.json(info.GatewayPageURL)
+                }
+                else {
+                    return res.status(200).json({
+                        message: "SSL session was not successful"
+                    })
+                }
+            });
+        })
+
+        app.post("/success", async (req, res) => {
+
+            const result = await orderCollection.updateOne({ tran_id: req.body.tran_id }, {
+                $set: {
+                    val_id: req.body.val_id
+                }
+            })
+
+            res.redirect(`http://localhost:3000/success/${req.body.tran_id}`)
+
+        })
+        app.post("/fail", async (req, res) => {
+            const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
+
+            res.redirect(`http://localhost:3000/home`)
+        })
+        app.post("/cancel", async (req, res) => {
+            const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
+
+            res.redirect(`http://localhost:3000/home`)
+        })
+
+        app.post("/ipn", (req, res) => {
+            console.log(req.body)
+            res.send(req.body);
+        })
+
+        app.post('/validate', async (req, res) => {
+            const result = await orderCollection.findOne({
+                tran_id: req.body.tran_id
+            })
+
+            if (result.val_id === req.body.val_id) {
+                const update = await orderCollection.updateOne({ tran_id: req.body.tran_id }, {
+                    $set: {
+                        paymentStatus: 'Payment Complete'
+                    }
+                })
+                console.log(update);
+                res.send(update.modifiedCount > 0)
+
+            }
+            else {
+                res.send("Payment didn't Complete")
+            }
+
+        })
+
+        app.get('/orders/:tran_id', async (req, res) => {
+            const id = req.params.tran_id;
+            const result = await orderCollection.findOne({ tran_id: id })
+            res.json(result)
+        })
+
 
         // Get Service API
         app.get('/commonity', async (req, res) => {
@@ -108,13 +236,8 @@ async function run() {
         // update doctor api
         app.put('/updateDoctor/:id', async (req, res) => {
             console.log("body", req.body);
-            console.log("files", req.files);
             const id = req.params.id;
             const { name, experience, birthday, gender, phone, speciality, email, twitter, linkedin, facebook, address, eduLine1, eduLine2, eduLine3, awardFirst, awardSecond, awardThird, title, description, day, time, shift, skill1, skill2, skill3, percent1, percent2, percent3, moto } = req.body;
-
-            const image = req.files.image.data;
-            const encodedImg = image.toString('base64');
-            const imageBuffer = Buffer.from(encodedImg, 'base64');
 
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
@@ -149,8 +272,7 @@ async function run() {
                     percent1: percent1,
                     percent2: percent2,
                     percent3: percent3,
-                    moto: moto,
-                    photo: imageBuffer
+                    moto: moto
 
                 },
             };
@@ -160,6 +282,59 @@ async function run() {
         /*======================================================
                         Doctors Section Ends
         ========================================================*/
+
+        // nurse section start
+        app.post('/addNurse', async (req, res) => {
+            console.log(req.body);
+            console.log(req.files);
+            const { name, description, day, time, shift, email, phone, gender } = req.body;
+            const image = req.files.image.data;
+            const encodedImg = image.toString('base64');
+            const imageBuffer = Buffer.from(encodedImg, 'base64');
+
+            const doctorInfo = {
+                name, description, day, time, shift, email, phone, gender,
+                photo: imageBuffer
+            }
+            const result = await nurseCollection.insertOne(doctorInfo);
+            res.send(result);
+        })
+        app.get('/nurses', async (req, res) => {
+            const nurse = nurseCollection.find({});
+            const result = await nurse.toArray();
+            res.send(result);
+        })
+        app.delete('/nurses/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await nurseCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.put('/updateNurse/:id', async (req, res) => {
+            console.log("body", req.body);
+            const id = req.params.id;
+            const { name, description, day, time, shift, email, phone, gender } = req.body;
+
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateFile = {
+                $set: {
+
+                    name: name,
+                    description: description,
+                    day: day,
+                    time: time,
+                    shift: shift,
+                    email: email,
+                    phone: phone,
+                    gender: gender
+                },
+            };
+            const result = await nurseCollection.updateOne(filter, updateFile, options)
+            res.send(result);
+        })
+        // nurse section end
+
         /*======================================================
                         Medicine Section Starts
         ========================================================*/
@@ -192,6 +367,61 @@ async function run() {
         })
         /*======================================================
                         Medicine Section Ends
+        ========================================================*/
+        /*======================================================
+                        Admin Panel Section Starts
+        ========================================================*/
+        // Doctor Account Created By Admin
+        app.post('/adminSign', async (req, res) => {
+            const { adminName, avatar, email, passWord, role } = req.body;
+            if (!email || !passWord || !adminName || !role) {
+                return res.status(422).json({ error: "All Input Fields Are Reqired" })
+            }
+            const adminPanel = await adminCollection.findOne({ email: email })
+            if (adminPanel) {
+                return res.status(422).json({ error: "This Admin Panel Member Already Exists" })
+            }
+            const securePassWord = await bcrypt.hash(passWord, 12)
+            await new Admin({
+                adminName: adminName,
+                email: email,
+                passWord: securePassWord,
+                photoURL: avatar,
+                role: role,
+            }).save()
+            res.status(200).json({ message: "Hay Admin! New Admin Panel Member Successfully Added! Please Login" })
+        });
+        // Doctor login Api
+        app.post('/adminlogin', async (req, res) => {
+            const { email, passWord } = req.body;
+            if (!email || !passWord) {
+                return res.status(422).json({ error: "All Input Fields Are Reqired" })
+            }
+            const doctor = await adminCollection.findOne({ role: "doctor" })
+            if (!doctor) {
+                return res.status(422).json({ error: "Sorry! This Doctor Doesn't Exists." })
+            }
+            const match = await bcrypt.compare(passWord, doctor.passWord)
+            if (match) {
+                const role = jwt.sign({ role: user.role }, secretPass)
+                return res.status(201).json({ role })
+            } else {
+                return res.status(401).json({ error: "Email Or Password is Invalid." })
+            }
+        })
+        // Login Require
+        const requireLogin = (req, res, next) => {
+            const { authorization } = req.headers
+            if (!authorization) {
+                return res.status(401).json({ error: "Sorry! You must be logged in" })
+            }
+            const { role } = jwt.verify(authorization, secretPass)
+            req.user = role
+            next()
+        };
+
+        /*======================================================
+                        Admin Panel Section Ends
         ========================================================*/
         /*======================================================
                         User Section Starts
