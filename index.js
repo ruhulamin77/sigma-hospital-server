@@ -312,7 +312,7 @@ async function run() {
             const match = await bcrypt.compare(passWord, admin.passWord)
             if (match) {
                 const token = jwt.sign({ admin: admin._id }, secretPass)
-                return res.status(201).json({ token: token, role: admin.role, displayName: admin.adminName, photoURL: admin.photoURL })
+                return res.status(201).json({ token: token, role: admin.role, displayName: admin.adminName, adminEmail: admin.email, photoURL: admin.photoURL })
             } else {
                 return res.status(401).json({ "error": "Email Or Password is Invalid." })
             }
