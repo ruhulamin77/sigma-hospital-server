@@ -384,11 +384,11 @@ async function run() {
         app.post('/adminRegistar', async (req, res) => {
             const { adminName, photoURL , email, passWord, role } = req.body;
             if (!email || !passWord || !adminName || !role) {
-                return res.status(422).json({ "error": "All Input Fields Are Reqired" })
+                return res.status(422).json({ error: "All Input Fields Are Reqired" })
             }
             const adminEmail = await adminCollection.findOne({ email: email })
             if (adminEmail) {
-                return res.status(422).json({ "error": "This Admin Panel Member Already Exists" })
+                return res.status(422).json({ error: "This Admin Panel Member Already Exists" })
             }
             const securePassWord = await bcrypt.hash(passWord, 12)
             const data = {
@@ -400,32 +400,32 @@ async function run() {
             }
             const adminMember = await adminCollection.insertOne(data);
             res.send(adminMember);
-            res.status(200).json({ "message": "Hay Admin! New Admin Panel Member Successfully Added! Please Login" })
+            res.status(200).json({ message: "Hay Admin! New Admin Panel Member Successfully Added! Please Login" })
         });
         // Doctor login Api
         app.post('/adminLogin', async (req, res) => {
             console.log(req.body)
             const { email, passWord } = req.body;
             if (!email || !passWord) {
-                return res.status(422).json({ "error": "All Input Fields Are Reqired" })
+                return res.status(422).json({ error: "All Input Fields Are Reqired" })
             }
             const admin = await adminCollection.findOne({email : email})
             if (!admin) {
-                return res.status(422).json({ "error": "Sorry! This Doctor Doesn't Exists." })
+                return res.status(422).json({ error: "Sorry! This Doctor Doesn't Exists." })
             }
             const match = await bcrypt.compare(passWord, admin.passWord)
             if (match) {
                 const token = jwt.sign({ admin: admin._id }, secretPass)
                 return res.status(201).json({ token: token, role: admin.role, displayName: admin.adminName, adminEmail: admin.email, photoURL: admin.photoURL })
             } else {
-                return res.status(401).json({ "error": "Email Or Password is Invalid." })
+                return res.status(401).json({ error: "Email Or Password is Invalid." })
             }
         })
         // Login Require
         const requireLogin = (req, res, next) => {
             const { authorization } = req.headers
             if (!authorization) {
-                return res.status(401).json({ "error": "Sorry! You must be logged in" })
+                return res.status(401).json({ error: "Sorry! You must be logged in" })
             }
             const { role } = jwt.verify(authorization, secretPass)
                 req.user = role
