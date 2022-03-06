@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require("mongodb").ObjectId;
-const SSLCommerzPayment = require('sslcommerz')
+const SSLCommerzPayment = require('sslcommerz');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const secretPass = 'SfrgiefeGefgMewtA'
@@ -243,6 +243,15 @@ async function run() {
         /*======================================================
                         Doctors Section Ends
         ========================================================*/
+
+        // get single doctor using email
+        app.get('/doctors/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { doctorEmail: email };
+            const patientsInfo = appointmentCollection.find(query);
+            const result = await patientsInfo.toArray();
+            res.send(result);
+        })
         /*======================================================
                         Nurse Section Starts
         ========================================================*/
@@ -339,19 +348,19 @@ async function run() {
             const encodedImg = image.toString('base64');
             const imageBuffer = Buffer.from(encodedImg, 'base64');
             const blogInfo = {
-                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType,date, likes, comments,
+                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments,
                 photo: imageBuffer
             }
             const result = await blogCollection.insertOne(blogInfo);
             console.log(result);
             res.send(result);
         })
-          // get all doctor 
-          app.get('/Blog', async (req, res) => {
+        // get all doctor 
+        app.get('/Blog', async (req, res) => {
             const blog = blogCollection.find({});
             const result = await blog.toArray();
             res.send(result);
-          });
+        });
 
         app.delete('/Blog/:id', async (req, res) => {
             const id = req.params.id;
@@ -364,15 +373,15 @@ async function run() {
                         Appointment Section starts
         ========================================================*/
         app.post("/appointments", async (req, res) => {
-        const appointments = req.body;
-        const result = await appointmentCollection.insertOne(appointments);
-        res.send(result);
-        console.log(appointments);
+            const appointments = req.body;
+            const result = await appointmentCollection.insertOne(appointments);
+            res.send(result);
+            console.log(appointments);
         });
         app.get("/appointments", async (req, res) => {
-        const appointments = appointmentCollection.find({});
-        const result = await appointments.toArray();
-        res.send(result);
+            const appointments = appointmentCollection.find({});
+            const result = await appointments.toArray();
+            res.send(result);
         });
         /*======================================================
                         Appointment Section ends
@@ -382,7 +391,7 @@ async function run() {
         ========================================================*/
         // Doctor Account Created By Admin
         app.post('/adminRegistar', async (req, res) => {
-            const { adminName, photoURL , email, passWord, role } = req.body;
+            const { adminName, photoURL, email, passWord, role } = req.body;
             if (!email || !passWord || !adminName || !role) {
                 return res.status(422).json({ "error": "All Input Fields Are Reqired" })
             }
@@ -409,7 +418,7 @@ async function run() {
             if (!email || !passWord) {
                 return res.status(422).json({ "error": "All Input Fields Are Reqired" })
             }
-            const admin = await adminCollection.findOne({email : email})
+            const admin = await adminCollection.findOne({ email: email })
             if (!admin) {
                 return res.status(422).json({ "error": "Sorry! This Doctor Doesn't Exists." })
             }
@@ -428,7 +437,7 @@ async function run() {
                 return res.status(401).json({ "error": "Sorry! You must be logged in" })
             }
             const { role } = jwt.verify(authorization, secretPass)
-                req.user = role
+            req.user = role
             next()
         };
 
