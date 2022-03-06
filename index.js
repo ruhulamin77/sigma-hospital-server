@@ -38,7 +38,7 @@ async function run() {
     const medicineCollection = database.collection("medicine");
     const nurseCollection = database.collection("nurses");
     const prescriptionCollection = database.collection("prescription");
-    const appointmentsCollection = database.collection("appointments");
+    const appointmentCollection = database.collection("appointments");
     // const userOrder = database.collection('user_order');
 
     // Create collection
@@ -319,6 +319,15 @@ async function run() {
     /*======================================================
                         Doctors Section Ends
         ========================================================*/
+
+    // get single doctor using email
+    app.get("/doctors/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { doctorEmail: email };
+      const patientsInfo = appointmentCollection.find(query);
+      const result = await patientsInfo.toArray();
+      res.send(result);
+    });
     /*======================================================
                         Nurse Section Starts
         ========================================================*/
@@ -481,12 +490,12 @@ async function run() {
         ========================================================*/
     app.post("/appointments", async (req, res) => {
       const appointment = req.body;
-      //   const result = await appointmentsCollection.insertOne(appointment);
-      //   res.send(result);
+      const result = await appointmentCollection.insertOne(appointment);
+      res.send(result);
       console.log(appointment);
     });
     app.get("/appointments", async (req, res) => {
-      const appointment = appointmentsCollection.find({});
+      const appointment = appointmentCollection.find({});
       const result = await appointment.toArray();
       res.send(result);
     });
@@ -518,10 +527,12 @@ async function run() {
       };
       const adminMember = await adminCollection.insertOne(data);
       res.send(adminMember);
-      res.status(200).json({
-        message:
-          "Hay Admin! New Admin Panel Member Successfully Added! Please Login",
-      });
+      res
+        .status(200)
+        .json({
+          message:
+            "Hay Admin! New Admin Panel Member Successfully Added! Please Login",
+        });
     });
     // Doctor login Api
     app.post("/adminLogin", async (req, res) => {
@@ -539,13 +550,15 @@ async function run() {
       const match = await bcrypt.compare(passWord, admin.passWord);
       if (match) {
         const token = jwt.sign({ admin: admin._id }, secretPass);
-        return res.status(201).json({
-          token: token,
-          role: admin.role,
-          displayName: admin.adminName,
-          adminEmail: admin.email,
-          photoURL: admin.photoURL,
-        });
+        return res
+          .status(201)
+          .json({
+            token: token,
+            role: admin.role,
+            displayName: admin.adminName,
+            adminEmail: admin.email,
+            photoURL: admin.photoURL,
+          });
       } else {
         return res.status(401).json({ error: "Email Or Password is Invalid." });
       }
