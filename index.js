@@ -11,6 +11,8 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const port = process.env.PORT || 7050;
 const fileUpload = require('express-fileupload');
+const timespan = require('jsonwebtoken/lib/timespan');
+const res = require('express/lib/response');
 
 //Middle Ware
 app.use(cors());
@@ -36,6 +38,8 @@ async function run() {
         const nurseCollection = database.collection('nurses');
         const prescriptionCollection = database.collection('prescription');
         const appointmentCollection = database.collection('appointments');
+        const converssationCollection = database.collection('converssation');
+        const messageCollection = database.collection('message');
         // const userOrder = database.collection('user_order');
 
         // Create collection
@@ -339,19 +343,19 @@ async function run() {
             const encodedImg = image.toString('base64');
             const imageBuffer = Buffer.from(encodedImg, 'base64');
             const blogInfo = {
-                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType,date, likes, comments,
+                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments,
                 photo: imageBuffer
             }
             const result = await blogCollection.insertOne(blogInfo);
             console.log(result);
             res.send(result);
         })
-          // get all doctor 
-          app.get('/Blog', async (req, res) => {
+        // get all doctor 
+        app.get('/Blog', async (req, res) => {
             const blog = blogCollection.find({});
             const result = await blog.toArray();
             res.send(result);
-          });
+        });
 
         app.delete('/Blog/:id', async (req, res) => {
             const id = req.params.id;
@@ -360,120 +364,175 @@ async function run() {
             res.send(result);
         })
 
-        /*======================================================
-                        Appointment Section starts
-        ========================================================*/
-        app.post("/appointments", async (req, res) => {
+
+
+        // Chat App
+
+        app.post("/conversation", async (req, res) => {
+            const aaa = {
+                member: [req.body.senderId, req.body.reciverId],
+                time: new Date()
+        };
+        const result = await converssationCollection.insertOne(aaa);
+        res.send(result);
+    });
+        app.get("/conversation/:id", async (req, res) => {
+            const result = await converssationCollection.find({
+            member: {$in: [req.params.id] }}).toArray();
+        res.send(result);
+        console.log(result);
+    });
+        // message
+        app.post("/messages", async (req, res) => {
+            console.log(req?.body);
+            const aaa = {
+                converssationId:req.body.converssationId,
+                senderId:req.body.senderId,
+                text:req.body.text
+            };
+
+            const result = await messageCollection.insertOne(aaa)
+            res.send(result)
+            
+        })
+
+        app.get('/messages/:Id', async (req, res) => {
+            // const id = req.params.Id;
+            // const query = { converssationId: id };
+            const result = await messageCollection.find({
+                converssationId: req.params.Id
+            }).toArray()
+            res.send(result)
+        })
+
+        app.get('/users/:email', async (req, res) => {
+            const cursor = userCollection.findOne({email: req.params.email});
+            const users = await cursor;
+            res.send(users);
+        });
+        app.get('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const cursor = await userCollection.findOne(query);
+
+            res.send(cursor);
+        });
+        
+        
+    /*======================================================
+                    Appointment Section starts
+    ========================================================*/
+    app.post("/appointments", async (req, res) => {
         const appointments = req.body;
         const result = await appointmentCollection.insertOne(appointments);
         res.send(result);
         console.log(appointments);
-        });
-        app.get("/appointments", async (req, res) => {
+    });
+    app.get("/appointments", async (req, res) => {
         const appointments = appointmentCollection.find({});
         const result = await appointments.toArray();
         res.send(result);
-        });
-        /*======================================================
-                        Appointment Section ends
-        ========================================================*/
-        /*======================================================
-                        Admin Panel Section Starts
-        ========================================================*/
-        // Doctor Account Created By Admin
-        app.post('/adminRegistar', async (req, res) => {
-            const { adminName, photoURL , email, passWord, role } = req.body;
-            if (!email || !passWord || !adminName || !role) {
-                return res.status(422).json({ "error": "All Input Fields Are Reqired" })
-            }
-            const adminEmail = await adminCollection.findOne({ email: email })
-            if (adminEmail) {
-                return res.status(422).json({ "error": "This Admin Panel Member Already Exists" })
-            }
-            const securePassWord = await bcrypt.hash(passWord, 12)
-            const data = {
-                adminName: adminName,
-                email: email,
-                passWord: securePassWord,
-                photoURL: photoURL,
-                role: role
-            }
-            const adminMember = await adminCollection.insertOne(data);
-            res.send(adminMember);
-            res.status(200).json({ "message": "Hay Admin! New Admin Panel Member Successfully Added! Please Login" })
-        });
-        // Doctor login Api
-        app.post('/adminLogin', async (req, res) => {
-            console.log(req.body)
-            const { email, passWord } = req.body;
-            if (!email || !passWord) {
-                return res.status(422).json({ "error": "All Input Fields Are Reqired" })
-            }
-            const admin = await adminCollection.findOne({email : email})
-            if (!admin) {
-                return res.status(422).json({ "error": "Sorry! This Doctor Doesn't Exists." })
-            }
-            const match = await bcrypt.compare(passWord, admin.passWord)
-            if (match) {
-                const token = jwt.sign({ admin: admin._id }, secretPass)
-                return res.status(201).json({ token: token, role: admin.role, displayName: admin.adminName, adminEmail: admin.email, photoURL: admin.photoURL })
-            } else {
-                return res.status(401).json({ "error": "Email Or Password is Invalid." })
-            }
-        })
-        // Login Require
-        const requireLogin = (req, res, next) => {
-            const { authorization } = req.headers
-            if (!authorization) {
-                return res.status(401).json({ "error": "Sorry! You must be logged in" })
-            }
-            const { role } = jwt.verify(authorization, secretPass)
-                req.user = role
-            next()
-        };
+    });
+    /*======================================================
+                    Appointment Section ends
+    ========================================================*/
+    /*======================================================
+                    Admin Panel Section Starts
+    ========================================================*/
+    // Doctor Account Created By Admin
+    app.post('/adminRegistar', async (req, res) => {
+        const { adminName, photoURL, email, passWord, role } = req.body;
+        if (!email || !passWord || !adminName || !role) {
+            return res.status(422).json({ "error": "All Input Fields Are Reqired" })
+        }
+        const adminEmail = await adminCollection.findOne({ email: email })
+        if (adminEmail) {
+            return res.status(422).json({ "error": "This Admin Panel Member Already Exists" })
+        }
+        const securePassWord = await bcrypt.hash(passWord, 12)
+        const data = {
+            adminName: adminName,
+            email: email,
+            passWord: securePassWord,
+            photoURL: photoURL,
+            role: role
+        }
+        const adminMember = await adminCollection.insertOne(data);
+        res.send(adminMember);
+        res.status(200).json({ "message": "Hay Admin! New Admin Panel Member Successfully Added! Please Login" })
+    });
+    // Doctor login Api
+    app.post('/adminLogin', async (req, res) => {
+        console.log(req.body)
+        const { email, passWord } = req.body;
+        if (!email || !passWord) {
+            return res.status(422).json({ "error": "All Input Fields Are Reqired" })
+        }
+        const admin = await adminCollection.findOne({ email: email })
+        if (!admin) {
+            return res.status(422).json({ "error": "Sorry! This Doctor Doesn't Exists." })
+        }
+        const match = await bcrypt.compare(passWord, admin.passWord)
+        if (match) {
+            const token = jwt.sign({ admin: admin._id }, secretPass)
+            return res.status(201).json({ token: token, role: admin.role, displayName: admin.adminName, adminEmail: admin.email, photoURL: admin.photoURL })
+        } else {
+            return res.status(401).json({ "error": "Email Or Password is Invalid." })
+        }
+    })
+    // Login Require
+    const requireLogin = (req, res, next) => {
+        const { authorization } = req.headers
+        if (!authorization) {
+            return res.status(401).json({ "error": "Sorry! You must be logged in" })
+        }
+        const { role } = jwt.verify(authorization, secretPass)
+        req.user = role
+        next()
+    };
 
-        /*======================================================
-                        Admin Panel Section Ends
-        ========================================================*/
-        /*======================================================
-                        User Section Starts
-        ========================================================*/
-        // Get patients From Database
-        app.get('/patients', async (req, res) => {
-            const cursor = patientsCollection.find({});
-            const patients = await cursor.toArray();
-            res.send(patients);
-        });
+    /*======================================================
+                    Admin Panel Section Ends
+    ========================================================*/
+    /*======================================================
+                    User Section Starts
+    ========================================================*/
+    // Get patients From Database
+    app.get('/patients', async (req, res) => {
+        const cursor = patientsCollection.find({});
+        const patients = await cursor.toArray();
+        res.send(patients);
+    });
 
-        // Get Users From Database
-        app.get('/users', async (req, res) => {
-            const cursor = userCollection.find({});
-            const users = await cursor.toArray();
-            res.send(users);
-        });
-        // Create Users By Email PassWord [Firebase]
-        app.post('/users', async (req, res) => {
-            const user = req.body;
-            const result = await userCollection.insertOne(user);
-            console.log(result);
-            res.json(result)
-        });
-        // Create And Update Users by Google Login [Firebase]
-        app.put('/users', async (req, res) => {
-            const user = req.body;
-            const find = { email: user.email };
-            const option = { upsert: true };
-            const updateDoc = { $set: user }
-            const result = await userCollection.updateOne(find, updateDoc, option);
-            res.json(result)
-        });
-        /*======================================================
-                        Users Section Ends
-        ========================================================*/
-    }
+    // Get Users From Database
+    app.get('/users', async (req, res) => {
+        const cursor = userCollection.find({});
+        const users = await cursor.toArray();
+        res.send(users);
+    });
+    // Create Users By Email PassWord [Firebase]
+    app.post('/users', async (req, res) => {
+        const user = req.body;
+        const result = await userCollection.insertOne(user);
+        console.log(result);
+        res.json(result)
+    });
+    // Create And Update Users by Google Login [Firebase]
+    app.put('/users', async (req, res) => {
+        const user = req.body;
+        const find = { email: user.email };
+        const option = { upsert: true };
+        const updateDoc = { $set: user }
+        const result = await userCollection.updateOne(find, updateDoc, option);
+        res.json(result)
+    });
+    /*======================================================
+                    Users Section Ends
+    ========================================================*/
+}
     finally {
-        // await client.close();
-    }
+    // await client.close();
+}
 }
 run().catch(console.dir);
 
