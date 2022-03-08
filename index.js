@@ -618,6 +618,65 @@ async function run() {
     /*======================================================
                         Users Section Ends
         ========================================================*/
+    //***************** Update ApI Code************************************** */
+
+    app.put("/medicine/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+
+      const result1 = await medicineCollection.findOne(query)
+      const stock = Number(result1.stock)
+
+      const updatedData = Number(req.body.stock.data);
+
+      const updateStock = updatedData + stock;
+
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          stock: updateStock
+        },
+      };
+      const result = await medicineCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+
+      res.json(result);
+    });
+
+    //***************** Update ApI Code End  ************************************** */
+
+    // ****** Update cart ******//
+    app.put("/medicine/:id", async (req, res) => {
+      // const id = req.params.id;
+      // const query = { _id: ObjectId(id) };
+
+      // const result1 = await medicineCollection.findOne(query)
+      // const stock = Number(result1.stock)
+
+      const updatedData = Number(req.body.stock.data);
+      const updateStock = updatedData - stock;
+      console.log(updateStock)
+      // const options = { upsert: true };
+      // const updateDoc = {
+      //   $set: {
+      //     stock: updateStock
+      //   },
+      // };
+      // const result = await medicineCollection.updateOne(
+      //   query,
+      //   updateDoc,
+      //   options
+      // );
+
+      // res.json(result);
+    });
+
+
+    // ****** Update  cart******//
+
   } finally {
     // await client.close();
   }
