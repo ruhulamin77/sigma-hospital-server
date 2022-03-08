@@ -37,7 +37,7 @@ async function run() {
     const doctorCollection = database.collection("doctors");
     const medicineCollection = database.collection("medicine");
     const nurseCollection = database.collection("nurses");
-    const prescriptionCollection = database.collection("prescription");
+    const prescriptionCollection = database.collection("prescriptions");
     const appointmentCollection = database.collection("appointments");
     // const userOrder = database.collection('user_order');
 
@@ -319,15 +319,34 @@ async function run() {
     /*======================================================
                         Doctors Section Ends
         ========================================================*/
+    /*======================================================
+                        Prescription Section Ends
+        ========================================================*/
 
-    // get single doctor using email
-    app.get("/doctors/:email", async (req, res) => {
+    // get single appointments using doctor's email
+    app.get("/appointments/:email", async (req, res) => {
       const email = req.params.email;
       const query = { doctorEmail: email };
       const patientsInfo = appointmentCollection.find(query);
       const result = await patientsInfo.toArray();
       res.send(result);
     });
+    // post prescription api
+    app.post("/prescription", async (req, res) => {
+      const prescription = req.body;
+      const result = await prescriptionCollection.insertOne(prescription);
+      res.send(result);
+    });
+
+    // get all prescription data
+    app.get("/prescription", async (req, res) => {
+      const allprescription = prescriptionCollection.find({});
+      const result = await allprescription.toArray();
+      res.send(result);
+    });
+    /*======================================================
+                        Prescription Section Ends
+        ========================================================*/
     /*======================================================
                         Nurse Section Starts
         ========================================================*/
@@ -413,19 +432,6 @@ async function run() {
       res.send(result);
     });
 
-    // post prescription api
-    app.post("/prescription", async (req, res) => {
-      const prescription = req.body;
-      const result = await prescriptionCollection.insertOne(prescription);
-      res.send(result);
-    });
-
-    // get all prescription data
-    app.get("/prescription", async (req, res) => {
-      const allprescription = prescriptionCollection.find({});
-      const result = await allprescription.toArray();
-      res.send(result);
-    });
     /*======================================================
                         Medicine Section Ends
         ========================================================*/
