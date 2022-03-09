@@ -618,19 +618,16 @@ async function run() {
     /*======================================================
                         Users Section Ends
         ========================================================*/
-    //***************** Update ApI Code************************************** */
+    //***************** Update ApI Stock medicine Code************************************** *********************/
 
     app.put("/medicine/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-
       const result1 = await medicineCollection.findOne(query)
       const stock = Number(result1.stock)
 
       const updatedData = Number(req.body.stock.data);
-
-      const updateStock = updatedData + stock;
-
+      const updateStock = (stock + updatedData);
       const options = { upsert: true };
       const updateDoc = {
         $set: {
@@ -642,41 +639,66 @@ async function run() {
         updateDoc,
         options
       );
-
       res.json(result);
     });
 
     //***************** Update ApI Code End  ************************************** */
+    // updata Stock data  Decrease////
+    app.put("/medicine/order/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const updatequantity = await medicineCollection.findOne(query);
+      const oldStock = Number(updatequantity.stock)
 
-    // ****** Update cart ******//
-    app.put("/medicine/:id", async (req, res) => {
-      // const id = req.params.id;
-      // const query = { _id: ObjectId(id) };
 
-      // const result1 = await medicineCollection.findOne(query)
-      // const stock = Number(result1.stock)
+      const updatedData = req.body.stock.data.quantity;
+      const saleStock = Number(updatedData)
+      const updateNewStock = oldStock - saleStock;
 
-      const updatedData = Number(req.body.stock.data);
-      const updateStock = updatedData - stock;
-      console.log(updateStock)
-      // const options = { upsert: true };
-      // const updateDoc = {
-      //   $set: {
-      //     stock: updateStock
-      //   },
-      // };
-      // const result = await medicineCollection.updateOne(
-      //   query,
-      //   updateDoc,
-      //   options
-      // );
-
-      // res.json(result);
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          stock: updateNewStock
+        },
+      };
+      const result = await medicineCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.json(result);
     });
 
 
-    // ****** Update  cart******//
+    // updata Stock data  Decrease////
 
+    // ****** Update delete data add cart ******//
+    app.put("/medicine", async (req, res) => {
+      const id = req.body.item.cartItems._id;
+      const query = { _id: ObjectId(id) };
+      const updatequantity = await medicineCollection.findOne(query);
+      const oldStock = Number(updatequantity.stock)
+
+      const updatedData = req.body.item.cartItems.quantity;
+      const deleteStock = Number(updatedData)
+      const updateNewStock = (oldStock + deleteStock);
+
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          stock: updateNewStock
+        },
+      };
+      const result = await medicineCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.json(result);
+    });
+
+    // ****** Update  cart******//
+    //***************** Update ApI Stock medicine Code***********************************************************/
   } finally {
     // await client.close();
   }
