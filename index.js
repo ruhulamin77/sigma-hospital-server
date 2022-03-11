@@ -320,7 +320,7 @@ async function run() {
                         Doctors Section Ends
         ========================================================*/
     /*======================================================
-                        Prescription Section Ends
+                        Prescription Section starts
         ========================================================*/
 
     // get single appointments using doctor's email
@@ -331,15 +331,27 @@ async function run() {
       const result = await patientsInfo.toArray();
       res.send(result);
     });
-    // post prescription api
-    app.post("/prescription", async (req, res) => {
+
+    // post prescription data into database
+    app.post('/prescriptions', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
       const prescription = req.body;
-      const result = await prescriptionCollection.insertOne(prescription);
+      console.log(prescription);
+      const { inputFields, doctorName, patientName, patientAge, patientGender } = req.body;
+      const patientPrescription = {
+        inputFields: inputFields,
+        doctorName: doctorName,
+        patientName: patientName,
+        patientAge: patientAge,
+        patientGender: patientGender
+      }
+      const result = await prescriptionCollection.insertOne(patientPrescription);
       res.send(result);
     });
 
     // get all prescription data
-    app.get("/prescription", async (req, res) => {
+    app.get("/prescriptions", async (req, res) => {
       const allprescription = prescriptionCollection.find({});
       const result = await allprescription.toArray();
       res.send(result);
