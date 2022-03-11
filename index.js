@@ -426,60 +426,6 @@ async function run() {
           /*======================================================
                         Chat Section starts
         ========================================================*/
-        // Chat App
-    //     app.post("/conversation", async (req, res) => {
-    //         const aaa = {
-    //             member: [req.body.member[0], req.body.member[1]],
-               
-    //         };
-    //         const result = await converssationCollection.insertOne(aaa);
-    //         res.send(result);
-    //     });
-    //     app.get("/conversation/:id", async (req, res) => {
-    //         const result = await converssationCollection.find({
-    //             member: { $in: [req.params.id] }
-    //         }).toArray();
-    //         res.send(result);
-    //     });
-    //     app.get("/onlineFridGet/:id", async (req, res) => {
-    //         const id = req.params.id;
-    //         const query = { _id: ObjectId(id) };
-    //         const cursor = await userCollection.findOne(query);
-    //         res.send(cursor);
-    //     });
-    //     app.get("/conversatio/:acc", async (req, res) => {
-    //         const id = req.params.acc;
-    //         console.log(id);
-    //         const query = { _id: ObjectId(id) };
-    //         const result = await converssationCollection.findOne(query);
-    //         res.send(result);
-    //     });
-    //     app.delete("/conversationDelete/:id", async (req, res) => {
-    //         const id = req.params.id;
-    //         console.log(id);
-    //         const query = { _id: ObjectId(id) };
-    //         const result = await converssationCollection.deleteOne(query);
-    //         res.send(result);
-    //     });
-    //     app.delete("/messageDelete/:id", async (req, res) => {
-    //         const id = req.params.id;
-    //         console.log(id);
-    //         const query = { _id: ObjectId(id) };
-    //         const result = await messageCollection.deleteOne(query);
-    //         res.send(result);
-    //     });
-    //     // message
-    //   app.post("/messages", async (req, res) => {
-    //     console.log(req.body);
-    //         const aaa = {converssationId: req.body.converssationId,
-    //             senderId: req.body.senderId,
-    //             text: req.body.text,
-    //             time: req.body.time
-    //         };
-    //         const result = await messageCollection.insertOne(aaa)
-    //         res.send(result)
-    //     })
-          
               // Chat App
         app.post("/conversation", async (req, res) => {
             const aaa = {
