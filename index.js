@@ -426,7 +426,7 @@ async function run() {
           /*======================================================
                         Chat Section starts
         ========================================================*/
-        // Chat App
+              // Chat App
         app.post("/conversation", async (req, res) => {
             const aaa = {
                 member: [req.body.member[0], req.body.member[1]],
@@ -477,7 +477,24 @@ async function run() {
             const result = await messageCollection.insertOne(aaa)
             res.send(result)
         })
-          
+
+        app.get('/messages/:Id', async (req, res) => {
+            const result = await messageCollection.find({converssationId: req.params.Id}).toArray()
+            res.send(result)
+        })
+      
+
+        app.get('/users/:email', async (req, res) => {
+            const cursor = userCollection.findOne({ email: req.params.email });
+            const users = await cursor;
+            res.send(users);
+        });
+        app.get('/getUsers/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const cursor = await userCollection.findOne(query);
+            res.send(cursor);
+        });
     /*======================================================
                     Nurse Section Ends
     ========================================================*/
