@@ -370,12 +370,12 @@ async function run() {
         ========================================================*/
         // blog post api Farid
         app.post('/addBlog', async (req, res) => {
-            const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments } = req.body;
-            const image = req.files.image.data;
-            const encodedImg = image.toString('base64');
+            const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date } = req.body;
+            const image = req?.files?.image?.data;
+            const encodedImg = image?.toString('base64');
             const imageBuffer = Buffer.from(encodedImg, 'base64');
             const blogInfo = {
-                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes, comments,
+                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes: [], comments: [], liked: false,
                 photo: imageBuffer
             }
             const result = await blogCollection.insertOne(blogInfo);
@@ -388,11 +388,45 @@ async function run() {
             const result = await blog.toArray();
             res.send(result);
         });
+        app.put('/updateBlogUnlike/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log("updateBlogUnlike");
+            const query = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const blog = blogCollection.findOneAndUpdate(
+                query, {
+                    $pull : {
+                        likes: req.body?.likes,
+                    }
+                }, options);
+            const result = await blog;
+            console.log("updateBlogUnlike");
+            res.send(result);
+        });
+        app.put('/updateBloglike/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log( "updateBloglike");
+            const options = { upsert: true };
+            const query = { _id: ObjectId(id) };
+            const blog = blogCollection.findOneAndUpdate(query, {
+                $push: {
+                    likes: req.body?.likes,
+                }
+            }, options);
+            const result = await blog;
+            res.send(result);
+        });
 
         app.delete('/Blog/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await blogCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.get('/Blog/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await blogCollection.findOne(query);
             res.send(result);
         })
         app.get('/Blog/:id', async (req, res) => {
