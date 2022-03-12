@@ -2,12 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const MongoClient = require("mongodb").MongoClient;
 const ObjectId = require("mongodb").ObjectId;
-const SSLCommerzPayment = require("sslcommerz");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const secretPass = "SfrgiefeGefgMewtA";
+const SSLCommerzPayment = require('sslcommerz')
 require("dotenv").config();
+
 const { v4: uuidv4 } = require("uuid");
+
 const app = express();
 const port = process.env.PORT || 7050;
 const fileUpload = require("express-fileupload");
@@ -41,28 +43,32 @@ async function run() {
     const appointmentCollection = database.collection('appointments');
     const converssationCollection = database.collection('converssation');
     const messageCollection = database.collection('message');
-    // const userOrder = database.collection('user_order');
+    const orderCollection = database.collection('order');
 
     // Create collection
-    const orderCollection = client.db("paymentssl").collection("orders");
+    // const orderCollection = client.db("paymentssl").collection("orders");
 
     //SSLCommerz Payment initialization Api
     app.post('/init', async (req, res) => {
+      // console.log(req.body)
       const data = {
-        total_amount: req.body.total_amount,
+        total_amount: req.body.Total,
+        cusName: req.body.cus_name,
+        cusNumber: req.body.cus_number,
+        cusAddress: req.body.cus_address,
         currency: 'BDT',
         tran_id: uuidv4(),
+        paymentStatus: 'pending',
         success_url: 'http://localhost:7050/success',
         fail_url: 'http://localhost:7050/fail',
         cancel_url: 'http://localhost:7050/cancel',
         ipn_url: 'http://localhost:7050/ipn',
-        paymentStatus: 'pending',
         shipping_method: 'Courier',
-        product_name: req.body.product_name,
+        product_name: 'Computer.',
         product_category: 'Electronic',
-        product_profile: req.body.product_profile,
-        cus_name: req.body.cus_name,
-        cus_email: req.body.cus_email,
+        product_profile: 'general',
+        cus_name: 'Customer Name',
+        cus_email: 'cust@yahoo.com',
         cus_add1: 'Dhaka',
         cus_add2: 'Dhaka',
         cus_city: 'Dhaka',
@@ -84,7 +90,6 @@ async function run() {
         value_c: 'ref003_C',
         value_d: 'ref004_D'
       };
-
       // Insert order info
       const result = await orderCollection.insertOne(data);
 
@@ -93,80 +98,97 @@ async function run() {
         //process the response that got from sslcommerz 
         //https://developer.sslcommerz.com/doc/v4/#returned-parameters
         // console.log(data);
-        const info = { ...productInfo, ...data }
-        // console.log(info.GatewayPageURL);
-        if (info.GatewayPageURL) {
-          res.json(info.GatewayPageURL)
+        // console.log(data.GatewayPageURL)
+        // res.json(data.GatewayPageURL)
+        if (data.GatewayPageURL) {
+          res.json(data.GatewayPageURL)
         }
         else {
-          return res.status(200).json({
+          return res.status(400).json({
             message: "SSL session was not successful"
           })
         }
+
+
       });
     })
 
     app.post("/success", async (req, res) => {
-
+      console.log(req.body)
       const result = await orderCollection.updateOne({ tran_id: req.body.tran_id }, {
+
         $set: {
-          val_id: req.body.val_id
+          item: req.body.item,
+          // val_id: req.body.val_id
         }
       })
 
-      res.redirect(`http://localhost:3000/success/${req.body.tran_id}`)
+      res.status(200).redirect(`http://localhost:3000/PaymentSuccess`)
+      // res.redirect(`http://localhost:3000/PaymentSuccess/${req.body.tran_id}`)
 
-    })
-    app.post("/fail", async (req, res) => {
-      const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
-
-      res.redirect(`http://localhost:3000/home`)
-    })
-    app.post("/cancel", async (req, res) => {
-      const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
-
-      res.redirect(`http://localhost:3000/home`)
-    })
-
-    app.post("/ipn", (req, res) => {
-      console.log(req.body)
-      res.send(req.body);
-    })
-
-    app.post('/validate', async (req, res) => {
-      const result = await orderCollection.findOne({
-        tran_id: req.body.tran_id
-      })
-
-      if (result.val_id === req.body.val_id) {
-        const update = await orderCollection.updateOne({ tran_id: req.body.tran_id }, {
-          $set: {
-            paymentStatus: 'Payment Complete'
-          }
-        })
-        console.log(update);
-        res.send(update.modifiedCount > 0)
-
-      }
-      else {
-        res.send("Payment didn't Complete")
-      }
-
-    })
-
-    app.get('/orders/:tran_id', async (req, res) => {
-      const id = req.params.tran_id;
-      const result = await orderCollection.findOne({ tran_id: id })
-      res.json(result)
-    })
-
-
-    // Get Service API
-    app.get('/commonity', async (req, res) => {
-      const cursor = commonityCollection.find({});
-      const commonity = await cursor.toArray();
-      res.send(commonity);
     });
+    app.post("/fail", async (req, res) => {
+
+      res.status(400).redirect(`http://localhost:3000/order`)
+
+    });
+
+    app.post("/cancel", async (req, res) => {
+
+      res.status(200).redirect(`http://localhost:3000/home`)
+
+    })
+
+    // app.post("/fail", async (req, res) => {
+    //   const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
+
+    //   res.redirect(`http://localhost:3000/home`)
+    // })
+    // app.post("/cancel", async (req, res) => {
+    //   const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
+
+    //   res.redirect(`http://localhost:3000/home`)
+    // })
+
+    // app.post("/ipn", (req, res) => {
+    //   console.log(req.body)
+    //   res.send(req.body);
+    // })
+
+    // app.post('/validate', async (req, res) => {
+    //   const result = await orderCollection.findOne({
+    //     tran_id: req.body.tran_id
+    //   })
+
+    //   if (result.val_id === req.body.val_id) {
+    //     const update = await orderCollection.updateOne({ tran_id: req.body.tran_id }, {
+    //       $set: {
+    //         paymentStatus: 'Payment Complete'
+    //       }
+    //     })
+    //     console.log(update);
+    //     res.send(update.modifiedCount > 0)
+
+    //   }
+    //   else {
+    //     res.send("Payment didn't Complete")
+    //   }
+
+    // })
+
+    // app.get('/orders/:tran_id', async (req, res) => {
+    //   const id = req.params.tran_id;
+    //   const result = await orderCollection.findOne({ tran_id: id })
+    //   res.json(result)
+    // })
+
+
+    // // Get Service API
+    // app.get('/commonity', async (req, res) => {
+    //   const cursor = commonityCollection.find({});
+    //   const commonity = await cursor.toArray();
+    //   res.send(commonity);
+    // });
     /*======================================================
                     Doctors Section Starts
     ========================================================*/
