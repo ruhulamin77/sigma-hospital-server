@@ -45,12 +45,15 @@ async function run() {
     const messageCollection = database.collection('message');
     const orderCollection = database.collection('order');
 
-    // Create collection
-    // const orderCollection = client.db("paymentssl").collection("orders");
-
+    //Costomer Order get api///
+    app.get('/order', async (req, res) => {
+      const order = orderCollection.find({});
+      const result = await order.toArray();
+      res.send(result);
+    });
     //SSLCommerz Payment initialization Api
     app.post('/init', async (req, res) => {
-      // console.log(req.body)
+      const item = req.body.item;
       const data = {
         total_amount: req.body.Total,
         cusName: req.body.cus_name,
@@ -58,7 +61,7 @@ async function run() {
         cusAddress: req.body.cus_address,
         currency: 'BDT',
         tran_id: uuidv4(),
-        paymentStatus: 'pending',
+        paymentStatus: 'successful',
         success_url: 'http://localhost:7050/success',
         fail_url: 'http://localhost:7050/fail',
         cancel_url: 'http://localhost:7050/cancel',
@@ -90,16 +93,16 @@ async function run() {
         value_c: 'ref003_C',
         value_d: 'ref004_D'
       };
-      // Insert order info
-      const result = await orderCollection.insertOne(data);
 
-      const sslcommer = new SSLCommerzPayment(process.env.STORE_ID, process.env.STORE_PASSWORD, false) //true for live default false for sandbox
+      const order = {
+        item,
+        data
+      }
+      const result = await orderCollection.insertOne(order);
+
+      const sslcommer = new SSLCommerzPayment(process.env.STORE_ID, process.env.STORE_PASSWORD, false) //
       sslcommer.init(data).then(data => {
-        //process the response that got from sslcommerz 
-        //https://developer.sslcommerz.com/doc/v4/#returned-parameters
-        // console.log(data);
-        // console.log(data.GatewayPageURL)
-        // res.json(data.GatewayPageURL)
+
         if (data.GatewayPageURL) {
           res.json(data.GatewayPageURL)
         }
@@ -115,16 +118,8 @@ async function run() {
 
     app.post("/success", async (req, res) => {
       console.log(req.body)
-      const result = await orderCollection.updateOne({ tran_id: req.body.tran_id }, {
+      res.status(200).redirect(`http://localhost:3000`)
 
-        $set: {
-          item: req.body.item,
-          // val_id: req.body.val_id
-        }
-      })
-
-      res.status(200).redirect(`http://localhost:3000/PaymentSuccess`)
-      // res.redirect(`http://localhost:3000/PaymentSuccess/${req.body.tran_id}`)
 
     });
     app.post("/fail", async (req, res) => {
@@ -139,56 +134,7 @@ async function run() {
 
     })
 
-    // app.post("/fail", async (req, res) => {
-    //   const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
 
-    //   res.redirect(`http://localhost:3000/home`)
-    // })
-    // app.post("/cancel", async (req, res) => {
-    //   const result = await orderCollection.deleteOne({ tran_id: req.body.tran_id })
-
-    //   res.redirect(`http://localhost:3000/home`)
-    // })
-
-    // app.post("/ipn", (req, res) => {
-    //   console.log(req.body)
-    //   res.send(req.body);
-    // })
-
-    // app.post('/validate', async (req, res) => {
-    //   const result = await orderCollection.findOne({
-    //     tran_id: req.body.tran_id
-    //   })
-
-    //   if (result.val_id === req.body.val_id) {
-    //     const update = await orderCollection.updateOne({ tran_id: req.body.tran_id }, {
-    //       $set: {
-    //         paymentStatus: 'Payment Complete'
-    //       }
-    //     })
-    //     console.log(update);
-    //     res.send(update.modifiedCount > 0)
-
-    //   }
-    //   else {
-    //     res.send("Payment didn't Complete")
-    //   }
-
-    // })
-
-    // app.get('/orders/:tran_id', async (req, res) => {
-    //   const id = req.params.tran_id;
-    //   const result = await orderCollection.findOne({ tran_id: id })
-    //   res.json(result)
-    // })
-
-
-    // // Get Service API
-    // app.get('/commonity', async (req, res) => {
-    //   const cursor = commonityCollection.find({});
-    //   const commonity = await cursor.toArray();
-    //   res.send(commonity);
-    // });
     /*======================================================
                     Doctors Section Starts
     ========================================================*/
