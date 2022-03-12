@@ -377,8 +377,8 @@ async function run() {
     // blog post api Farid
     app.post('/addBlog', async (req, res) => {
       const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date } = req.body;
-      const image = req?.files?.image?.data;
-      const encodedImg = image?.toString('base64');
+      const image = req.files?.image?.data;
+      const encodedImg = image.toString('base64');
       const imageBuffer = Buffer.from(encodedImg, 'base64');
       const blogInfo = {
         title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes: [], comments: [], liked: false,
