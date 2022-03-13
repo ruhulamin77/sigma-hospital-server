@@ -230,8 +230,6 @@ async function run() {
 
     // post prescription data into database
     app.post('/prescriptions', async (req, res) => {
-      const id = req.params.id;
-      console.log(id);
       const prescription = req.body;
       console.log(prescription);
       const { inputFields, doctorName, patientFirstName, patientLastName, patientAge, patientGender } = req.body;
@@ -244,6 +242,24 @@ async function run() {
         patientGender: patientGender
       }
       const result = await prescriptionCollection.insertOne(patientPrescription);
+      res.send(result);
+    });
+
+    // update prescription data
+    app.put('/prescriptions/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const prescription = req.body;
+      console.log(prescription);
+      const { inputFields } = req.body;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateFile = {
+        $set: {
+          inputFields: inputFields
+        },
+      };
+      const result = await prescriptionCollection.updateOne(filter, updateFile, options)
       res.send(result);
     });
 
