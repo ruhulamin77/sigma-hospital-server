@@ -37,7 +37,7 @@ async function run() {
     const doctorCollection = database.collection('doctors');
     const medicineCollection = database.collection('medicine');
     const nurseCollection = database.collection('nurses');
-    const prescriptionCollection = database.collection('prescription');
+    const prescriptionCollection = database.collection('prescriptions');
     const appointmentCollection = database.collection('appointments');
     const converssationCollection = database.collection('converssation');
     const messageCollection = database.collection('message');
@@ -267,11 +267,12 @@ async function run() {
       console.log(id);
       const prescription = req.body;
       console.log(prescription);
-      const { inputFields, doctorName, patientName, patientAge, patientGender } = req.body;
+      const { inputFields, doctorName, patientFirstName, patientLastName, patientAge, patientGender } = req.body;
       const patientPrescription = {
         inputFields: inputFields,
         doctorName: doctorName,
-        patientName: patientName,
+        patientFirstName: patientFirstName,
+        patientLastName: patientLastName,
         patientAge: patientAge,
         patientGender: patientGender
       }
@@ -326,175 +327,176 @@ async function run() {
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       const updateFile = {
-          $set: {
-            name: name,
-            description: description,
-            day: day,
-            time: time,
-            shift: shift,
-            email: email,
-            phone: phone,
-            gender: gender
-          },
-        };
-        const result = await nurseCollection.updateOne(filter, updateFile, options)
-        res.send(result);
-      })
+        $set: {
+          name: name,
+          description: description,
+          day: day,
+          time: time,
+          shift: shift,
+          email: email,
+          phone: phone,
+          gender: gender
+        },
+      };
+      const result = await nurseCollection.updateOne(filter, updateFile, options)
+      res.send(result);
+    })
 
-        // get all prescription data
-        app.get('/prescription', async (req, res) => {
-            const allprescription = prescriptionCollection.find({});
-            const result = await allprescription.toArray();
-            res.send(result);
-        })
-        /*======================================================
-                        Medicine Section Ends
-        ========================================================*/
-          /*======================================================
-                        Blog Section starts
-        ========================================================*/
-        // blog post api Farid
-        app.post('/addBlog', async (req, res) => {
-            const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date } = req.body;
-            const image = req.files?.image?.data;
-            const encodedImg = image.toString('base64');
-            const imageBuffer = Buffer.from(encodedImg, 'base64');
-            const blogInfo = {
-                title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes: [], comments: [], liked: false,
-                photo: imageBuffer
-            }
-            const result = await blogCollection.insertOne(blogInfo);
-            console.log(result);
-            res.send(result);
-        })
-        // get all doctor 
-        app.get('/Blog', async (req, res) => {
-            const blog = blogCollection.find({});
-            const result = await blog.toArray();
-            res.send(result);
-        });
-        app.put('/updateBlogUnlike/:id', async (req, res) => {
-            const id = req.params.id;
-            console.log("updateBlogUnlike");
-            const query = { _id: ObjectId(id) };
-            const options = { upsert: true };
-            const blog = blogCollection.findOneAndUpdate(
-                query, {
-                    $pull : {
-                        likes: req.body?.likes,
-                    }
-                }, options);
-            const result = await blog;
-            console.log("updateBlogUnlike");
-            res.send(result);
-        });
-        app.put('/updateBloglike/:id', async (req, res) => {
-            const id = req.params.id;
-            console.log( "updateBloglike");
-            const options = { upsert: true };
-            const query = { _id: ObjectId(id) };
-            const blog = blogCollection.findOneAndUpdate(query, {
-                $push: {
-                    likes: req.body?.likes,
-                }
-            }, options);
-            const result = await blog;
-            res.send(result);
-        });
+    // get all prescription data
+    app.get('/prescription', async (req, res) => {
+      const allprescription = prescriptionCollection.find({});
+      const result = await allprescription.toArray();
+      res.send(result);
+    })
+    /*======================================================
+                    Medicine Section Ends
+    ========================================================*/
+    /*======================================================
+                  Blog Section starts
+  ========================================================*/
+    // blog post api Farid
+    app.post('/addBlog', async (req, res) => {
+      const { title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date } = req.body;
+      const image = req.files?.image?.data;
+      const encodedImg = image.toString('base64');
+      const imageBuffer = Buffer.from(encodedImg, 'base64');
+      const blogInfo = {
+        title, description, subtitle1, subDescription1, subtitle2, subDescription2, subtitle3, subDescription3, subtitle4, subDescription4, blogType, date, likes: [], comments: [], liked: false,
+        photo: imageBuffer
+      }
+      const result = await blogCollection.insertOne(blogInfo);
+      console.log(result);
+      res.send(result);
+    })
+    // get all doctor 
+    app.get('/Blog', async (req, res) => {
+      const blog = blogCollection.find({});
+      const result = await blog.toArray();
+      res.send(result);
+    });
+    app.put('/updateBlogUnlike/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log("updateBlogUnlike");
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const blog = blogCollection.findOneAndUpdate(
+        query, {
+        $pull: {
+          likes: req.body?.likes,
+        }
+      }, options);
+      const result = await blog;
+      console.log("updateBlogUnlike");
+      res.send(result);
+    });
+    app.put('/updateBloglike/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log("updateBloglike");
+      const options = { upsert: true };
+      const query = { _id: ObjectId(id) };
+      const blog = blogCollection.findOneAndUpdate(query, {
+        $push: {
+          likes: req.body?.likes,
+        }
+      }, options);
+      const result = await blog;
+      res.send(result);
+    });
 
-        app.delete('/Blog/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const result = await blogCollection.deleteOne(query);
-            res.send(result);
-        })
-        app.get('/Blog/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const result = await blogCollection.findOne(query);
-            res.send(result);
-        })
-        app.get('/Blog/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const result = await blogCollection.findOne(query);
-            res.send(result);
-        })
-  /*======================================================
-                        blog Section End
-        ========================================================*/
-          /*======================================================
-                        Chat Section starts
-        ========================================================*/
-              // Chat App
-        app.post("/conversation", async (req, res) => {
-            const aaa = {
-                member: [req.body.member[0], req.body.member[1]],
-               
-            };
-            const result = await converssationCollection.insertOne(aaa);
-            res.send(result);
-        });
-        app.get("/conversation/:id", async (req, res) => {
-            const result = await converssationCollection.find({
-                member: { $in: [req.params.id] }
-            }).toArray();
-            res.send(result);
-        });
-        app.get("/onlineFridGet/:id", async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const cursor = await userCollection.findOne(query);
-            res.send(cursor);
-        });
-        app.get("/conversatio/:acc", async (req, res) => {
-            const id = req.params.acc;
-            const query = { _id: ObjectId(id) };
-            const result = await converssationCollection.findOne(query);
-            res.send(result);
-        });
-        app.delete("/conversationDelete/:id", async (req, res) => {
-            const id = req.params.id;
-            console.log(id);
-            const query = { _id: ObjectId(id) };
-            const result = await converssationCollection.deleteOne(query);
-            res.send(result);
-        });
-        app.delete("/messageDelete/:id", async (req, res) => {
-            const id = req.params.id;
-            console.log(id);
-            const query = { _id: ObjectId(id) };
-            const result = await messageCollection.deleteOne(query);
-            res.send(result);
-        });
-        // message
-        app.post("/messages", async (req, res) => {
-            const aaa = {converssationId: req.body.converssationId,
-                senderId: req.body.senderId,
-                text: req.body.text,
-                time: req.body.time
-            };
-            const result = await messageCollection.insertOne(aaa)
-            res.send(result)
-        })
+    app.delete('/Blog/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await blogCollection.deleteOne(query);
+      res.send(result);
+    })
+    app.get('/Blog/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await blogCollection.findOne(query);
+      res.send(result);
+    })
+    app.get('/Blog/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await blogCollection.findOne(query);
+      res.send(result);
+    })
+    /*======================================================
+                          blog Section End
+          ========================================================*/
+    /*======================================================
+                  Chat Section starts
+  ========================================================*/
+    // Chat App
+    app.post("/conversation", async (req, res) => {
+      const aaa = {
+        member: [req.body.member[0], req.body.member[1]],
 
-        app.get('/messages/:Id', async (req, res) => {
-            const result = await messageCollection.find({converssationId: req.params.Id}).toArray()
-            res.send(result)
-        })
-      
+      };
+      const result = await converssationCollection.insertOne(aaa);
+      res.send(result);
+    });
+    app.get("/conversation/:id", async (req, res) => {
+      const result = await converssationCollection.find({
+        member: { $in: [req.params.id] }
+      }).toArray();
+      res.send(result);
+    });
+    app.get("/onlineFridGet/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = await userCollection.findOne(query);
+      res.send(cursor);
+    });
+    app.get("/conversatio/:acc", async (req, res) => {
+      const id = req.params.acc;
+      const query = { _id: ObjectId(id) };
+      const result = await converssationCollection.findOne(query);
+      res.send(result);
+    });
+    app.delete("/conversationDelete/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await converssationCollection.deleteOne(query);
+      res.send(result);
+    });
+    app.delete("/messageDelete/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await messageCollection.deleteOne(query);
+      res.send(result);
+    });
+    // message
+    app.post("/messages", async (req, res) => {
+      const aaa = {
+        converssationId: req.body.converssationId,
+        senderId: req.body.senderId,
+        text: req.body.text,
+        time: req.body.time
+      };
+      const result = await messageCollection.insertOne(aaa)
+      res.send(result)
+    })
 
-        app.get('/users/:email', async (req, res) => {
-            const cursor = userCollection.findOne({ email: req.params.email });
-            const users = await cursor;
-            res.send(users);
-        });
-        app.get('/getUsers/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const cursor = await userCollection.findOne(query);
-            res.send(cursor);
-        });
+    app.get('/messages/:Id', async (req, res) => {
+      const result = await messageCollection.find({ converssationId: req.params.Id }).toArray()
+      res.send(result)
+    })
+
+
+    app.get('/users/:email', async (req, res) => {
+      const cursor = userCollection.findOne({ email: req.params.email });
+      const users = await cursor;
+      res.send(users);
+    });
+    app.get('/getUsers/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = await userCollection.findOne(query);
+      res.send(cursor);
+    });
     /*======================================================
                     Nurse Section Ends
     ========================================================*/
