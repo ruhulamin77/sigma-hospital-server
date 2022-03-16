@@ -118,7 +118,7 @@ async function run() {
 
     app.post("/success", async (req, res) => {
       console.log(req.body)
-      res.status(200).redirect(`http://localhost:3000`)
+      res.status(200).redirect(`http://localhost:3000/dashboard/invoice`)
 
 
     });
