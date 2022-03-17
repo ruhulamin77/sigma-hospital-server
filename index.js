@@ -337,6 +337,27 @@ async function run() {
       res.send(result);
     });
 
+    // added nurse data to appointed for a patient
+    app.put("/appointNurse/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const nurseData = req.body;
+      console.log("nurseData", nurseData);
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateFile = {
+        $set: {
+          appointNurse: nurseData
+        },
+      };
+      const result = await prescriptionCollection.updateOne(
+        filter,
+        updateFile,
+        options
+      );
+      res.send(result);
+    });
+
     // get all prescription data
     app.get("/prescriptions", async (req, res) => {
       const allprescription = prescriptionCollection.find({});
