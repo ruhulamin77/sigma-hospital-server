@@ -48,8 +48,6 @@ async function run() {
     const messageCollection = database.collection("message");
     const orderCollection = database.collection("order");
     const bloodRequestsCollection = database.collection("bloodRequests");
-    const bloodDonationCollection = database.collection("bloodDonations");
-    const donorsCollection = database.collection("donors");
 
     //Costomer Order get api///
     app.get("/order", async (req, res) => {
@@ -130,7 +128,7 @@ async function run() {
         }
       })
       console.log(req.body.val_id);
-      res.redirect(`http://localhost:7050/success/${req.body.tran_id}`)
+      res.redirect(`http://localhost:3000/dashboard/invoice`)
     });
     app.post("/fail", async (req, res) => {
       res.status(400).redirect(`http://localhost:3000/order`);
@@ -629,9 +627,24 @@ async function run() {
 
     // Medicine Api
     app.get("/medicine", async (req, res) => {
-      const medicine = medicineCollection.find({});
-      const result = await medicine.toArray();
-      res.send(result);
+      const cursor = medicineCollection.find({});
+      // const medicine = await cursor.toArray();
+      const page = req.query.page;
+      const size = parseInt(req.query.size);
+      const count = await cursor.count()
+
+
+      let medicine;
+      if (page) {
+        medicine = await cursor.skip(page * size).limit(size).toArray();
+
+      }
+      else {
+        medicine = await cursor.toArray();
+
+      }
+
+      res.send({ count, medicine });
     });
 
     // post prescription api
@@ -1023,43 +1036,6 @@ async function run() {
       const cursor = bloodRequestsCollection.find(query);
       const users = await cursor.toArray();
       res.json(users);
-    });
-
-    //  blood donation post api
-    app.post("/bloodDonation", async (req, res) => {
-      const bloodDonation = req.body;
-      const result = await bloodDonationCollection.insertOne(bloodDonation);
-      res.json(result);
-    });
-
-    // blood donation get api
-    app.get("/bloodDonation", async (req, res) => {
-      const cursor = bloodDonationCollection.find({});
-      const bloodDonation = await cursor.toArray();
-      res.json(bloodDonation);
-    });
-
-    // get filtered donation
-    app.get("/bloodDonation/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const cursor = bloodDonationCollection.find(query);
-      const bloodDonation = await cursor.toArray();
-      res.json(bloodDonation);
-    });
-
-    // donors post api
-    app.post("/donors", async (req, res) => {
-      const donor = req.body;
-      const result = await donorsCollection.insertOne(donor);
-      res.json(result);
-    });
-
-    //  donors get api
-    app.get("/donors", async (req, res) => {
-      const cursor = donorsCollection.find({});
-      const donors = await cursor.toArray();
-      res.json(donors);
     });
 
     /*======================================================
