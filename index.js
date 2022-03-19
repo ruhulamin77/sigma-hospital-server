@@ -1153,6 +1153,26 @@ async function run() {
       res.json(bloodDonation);
     });
 
+    // update blood donation api
+    app.put("/bloodDonation/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+      const query = { _id: ObjectId(id) };
+
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: updatedData.status,
+        },
+      };
+      const result = await bloodDonationCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.json(result);
+    });
+
     // donors post api
     app.post("/donors", async (req, res) => {
       const donor = req.body;
@@ -1166,6 +1186,26 @@ async function run() {
       const cursor = donorsCollection.find({});
       const donors = await cursor.toArray();
       res.json(donors);
+    });
+
+    // update donors request
+    app.put("/donors/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+      const query = { _id: ObjectId(id) };
+
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: updatedData.status,
+        },
+      };
+      const result = await donorsCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.json(result);
     });
 
     // update api blood request
@@ -1188,45 +1228,6 @@ async function run() {
       res.json(result);
     });
 
-    // UPDATE API
-    app.put("/bloodDonation/:id", async (req, res) => {
-      const id = req.params.id;
-      const updatedData = req.body;
-      const query = { _id: ObjectId(id) };
-
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          status: updatedData.status,
-        },
-      };
-      const result = await bloodDonationCollection.updateOne(
-        query,
-        updateDoc,
-        options
-      );
-      res.json(result);
-    });
-
-    // update donors request
-    app.put("/donors/:id", async (req, res) => {
-      const id = req.params.id;
-      const updatedData = req.body;
-      const query = { _id: ObjectId(id) };
-
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          status: updatedData.status,
-        },
-      };
-      const result = await donorsCollection.updateOne(
-        query,
-        updateDoc,
-        options
-      );
-      res.json(result);
-    });
     /*======================================================
                     blood bank ends
     ========================================================*/
