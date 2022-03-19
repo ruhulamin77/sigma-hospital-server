@@ -1205,7 +1205,6 @@ async function run() {
         updateDoc,
         options
       );
-      // console.log("updating user with id", result);
       res.json(result);
     });
 
