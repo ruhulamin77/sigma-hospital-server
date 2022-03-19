@@ -1044,6 +1044,7 @@ async function run() {
       const donor = req.body;
       const result = await donorsCollection.insertOne(donor);
       res.json(result);
+      console.log("donor");
     });
 
     //  donors get api
