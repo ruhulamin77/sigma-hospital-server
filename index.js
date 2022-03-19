@@ -1188,6 +1188,47 @@ async function run() {
       res.json(result);
     });
 
+    // UPDATE API
+    app.put("/bloodDonation/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+      const query = { _id: ObjectId(id) };
+
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: updatedData.status,
+        },
+      };
+      const result = await bloodDonationCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      // console.log('updating user with id', result);
+      res.json(result);
+    });
+
+    // UPDATE API blood donation request
+    app.put("/donors/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+      const query = { _id: ObjectId(id) };
+
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: updatedData.status,
+        },
+      };
+      const result = await donorsCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.json(result);
+    });
+
     /*======================================================
                     blood bank ends
     ========================================================*/
