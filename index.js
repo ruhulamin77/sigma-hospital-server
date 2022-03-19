@@ -1,4 +1,5 @@
 const express = require("express");
+
 const cors = require("cors");
 const MongoClient = require("mongodb").MongoClient;
 const ObjectId = require("mongodb").ObjectId;
@@ -6,8 +7,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const secretPass = "SfrgiefeGefgMewtA";
 const SSLCommerzPayment = require("sslcommerz");
-require("dotenv").config();
 
+require("dotenv").config();
 const { v4: uuidv4 } = require("uuid");
 
 const app = express();
@@ -17,6 +18,7 @@ const fileUpload = require("express-fileupload");
 //Middle Ware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mvbo5.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
@@ -47,6 +49,7 @@ async function run() {
     const bloodRequestsCollection = database.collection("bloodRequests");
     const bloodDonationCollection = database.collection("bloodDonations");
     const donorsCollection = database.collection("donors");
+    const reviewCollection = database.collection("review");
 
     //Costomer Order get api///
     app.get("/order", async (req, res) => {
@@ -109,6 +112,7 @@ async function run() {
         false
       ); //
       sslcommer.init(data).then((data) => {
+        console.log(req.body);
         if (data.GatewayPageURL) {
           res.json(data.GatewayPageURL);
         } else {
@@ -120,8 +124,16 @@ async function run() {
     });
 
     app.post("/success", async (req, res) => {
-      console.log(req.body);
-      res.status(200).redirect(`http://localhost:3000`);
+      const result = await orderCollection.updateOne(
+        { tran_id: req.body.tran_id },
+        {
+          $set: {
+            val_id: req.body.val_id,
+          },
+        }
+      );
+      console.log(req.body.val_id);
+      res.redirect(`http://localhost:3000/dashboard/invoice`);
     });
     app.post("/fail", async (req, res) => {
       res.status(400).redirect(`http://localhost:3000/order`);
@@ -339,6 +351,27 @@ async function run() {
       res.send(result);
     });
 
+    // added nurse data to appointed for a patient
+    app.put("/appointNurse/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const nurseData = req.body;
+      console.log("nurseData", nurseData);
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateFile = {
+        $set: {
+          appointNurse: nurseData,
+        },
+      };
+      const result = await prescriptionCollection.updateOne(
+        filter,
+        updateFile,
+        options
+      );
+      res.send(result);
+    });
+
     // get all prescription data
     app.get("/prescriptions", async (req, res) => {
       const allprescription = prescriptionCollection.find({});
@@ -423,11 +456,15 @@ async function run() {
     /*======================================================
                     Medicine Section Ends
     ========================================================*/
+
+    /*======================================================
+                  Chat Section starts
+  ========================================================*/
     /*======================================================
                   Blog Section starts
   ========================================================*/
-    // blog post api Farid
     app.post("/addBlog", async (req, res) => {
+      console.log(req, "");
       const {
         title,
         description,
@@ -441,6 +478,7 @@ async function run() {
         subDescription4,
         blogType,
         date,
+        tag,
       } = req.body;
       const image = req.files?.image?.data;
       const encodedImg = image.toString("base64");
@@ -460,7 +498,8 @@ async function run() {
         date,
         likes: [],
         comments: [],
-        liked: false,
+        totalVisitor: [],
+        tag,
         photo: imageBuffer,
       };
       const result = await blogCollection.insertOne(blogInfo);
@@ -469,6 +508,7 @@ async function run() {
     });
     // get all doctor
     app.get("/Blog", async (req, res) => {
+      console.log("okkk");
       const blog = blogCollection.find({});
       const result = await blog.toArray();
       res.send(result);
@@ -508,6 +548,7 @@ async function run() {
       const result = await blog;
       res.send(result);
     });
+    // delete blog
 
     app.delete("/Blog/:id", async (req, res) => {
       const id = req.params.id;
@@ -521,15 +562,180 @@ async function run() {
       const result = await blogCollection.findOne(query);
       res.send(result);
     });
+    //   find blog
     app.get("/Blog/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await blogCollection.findOne(query);
       res.send(result);
     });
+
+    // user count in blog section
+    app.put("/totalVisitor/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log("totalVisitor", req.body.visit);
+      const options = { upsert: true };
+      const query = { _id: ObjectId(id) };
+      console.log(query, "query");
+      const blog = blogCollection.findOneAndUpdate(
+        query,
+        {
+          $push: {
+            totalVisitor: req?.body?.visit,
+          },
+        },
+        options
+      );
+      const result = await blog;
+      res.send(result);
+    });
+    // comment add
+    app.put("/commentPut/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      console.log(req.body);
+      const blog = blogCollection.findOneAndUpdate(
+        query,
+        {
+          $push: {
+            comments: req?.body,
+          },
+        },
+        options
+      );
+      const result = await blog;
+      res.send(result);
+    });
+    // get comment
+    app.get("/getComment/:id", async (req, res) => {
+      const id = req.params.id;
+      const quary = {
+        comments: {
+          $elemMatch: {
+            id: id,
+          },
+        },
+      };
+      console.log(quary);
+    });
+    // 1st need this
     /*======================================================
                           blog Section End
           ========================================================*/
+    /*======================================================
+                  Chat Section starts
+  ========================================================*/
+    // Chat App
+    app.post("/conversation", async (req, res) => {
+      const aaa = {
+        member: [req.body.member[0], req.body.member[1]],
+      };
+      const result = await converssationCollection.insertOne(aaa);
+      res.send(result);
+    });
+    app.get("/conversation/:id", async (req, res) => {
+      const result = await converssationCollection
+        .find({
+          member: { $in: [req.params.id] },
+        })
+        .toArray();
+      res.send(result);
+    });
+    app.get("/onlineFridGet/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = await userCollection.findOne(query);
+      res.send(cursor);
+    });
+    app.get("/conversatio/:acc", async (req, res) => {
+      const id = req.params.acc;
+      const query = { _id: ObjectId(id) };
+      const result = await converssationCollection.findOne(query);
+      res.send(result);
+    });
+    app.delete("/conversationDelete/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await converssationCollection.deleteOne(query);
+      res.send(result);
+    });
+    app.delete("/messageDelete/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await messageCollection.deleteOne(query);
+      res.send(result);
+    });
+    // message
+    app.post("/messages", async (req, res) => {
+      const aaa = {
+        converssationId: req.body.converssationId,
+        senderId: req.body.senderId,
+        text: req.body.text,
+        time: req.body.time,
+      };
+      const result = await messageCollection.insertOne(aaa);
+      res.send(result);
+    });
+
+    app.get("/messages/:Id", async (req, res) => {
+      console.log(req.params.Id);
+
+      const result = await messageCollection
+        .find({ converssationId: req.params.Id })
+        .toArray();
+      res.send(result);
+    });
+
+    app.get("/users/:email", async (req, res) => {
+      const cursor = userCollection.findOne({ email: req.params.email });
+      const users = await cursor;
+      res.send(users);
+    });
+    app.get("/getUsers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const cursor = await userCollection.findOne(query);
+      res.send(cursor);
+    });
+    /*======================================================
+                    Nurse Section Ends
+    ========================================================*/
+    /*======================================================
+                    Medicine Section Starts
+    ========================================================*/
+    // post medicine api
+    app.post("/medicine", async (req, res) => {
+      const medicine = req.body;
+      const result = await medicineCollection.insertOne(medicine);
+      res.send(result);
+    });
+
+    // Medicine Api
+    app.get("/medicine", async (req, res) => {
+      const cursor = medicineCollection.find({});
+      // const medicine = await cursor.toArray();
+      const page = req.query.page;
+      const size = parseInt(req.query.size);
+      const count = await cursor.count();
+
+      let medicine;
+      if (page) {
+        medicine = await cursor
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else {
+        medicine = await cursor.toArray();
+      }
+
+      res.send({ count, medicine });
+    });
+
     /*======================================================
                   Chat Section starts
   ========================================================*/
@@ -604,6 +810,37 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const cursor = await userCollection.findOne(query);
       res.send(cursor);
+    });
+
+    // admin
+    // app.get('/getAllDoctor', async (req, res) => {
+    //   const cursor = await adminCollection.find({}).toArray();
+    //   res.send(cursor);
+    // });
+    // app.get('/getAllDoctor/:id', async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: ObjectId(id) };
+    //   const cursor = await adminCollection.findOne(query);
+    //   res.send(cursor);
+    // });
+
+    // review section
+    app.post("/reviewAdd", async (req, res) => {
+      console.log(req.body);
+      const info = {
+        describe: req.body.describe,
+        rating: req.body.rating,
+        email: req.body.email,
+        time: new Date(),
+        displayName: req.body.displayName,
+        photoURL: req.body.photoURL,
+      };
+      const result = await reviewCollection.insertOne(info);
+      res.send(result);
+    });
+    app.get("/reviewAdd", async (req, res) => {
+      const result = await reviewCollection.find({}).toArray();
+      res.send(result);
     });
     /*======================================================
                     Nurse Section Ends
@@ -641,147 +878,24 @@ async function run() {
     /*======================================================
                     Medicine Section Ends
     ========================================================*/
-    /*======================================================
-                  Blog Section starts
-  ========================================================*/
-    // blog post api Farid
-    app.post("/addBlog", async (req, res) => {
-      const {
-        title,
-        description,
-        subtitle1,
-        subDescription1,
-        subtitle2,
-        subDescription2,
-        subtitle3,
-        subDescription3,
-        subtitle4,
-        subDescription4,
-        blogType,
-        date,
-        likes,
-        comments,
-      } = req.body;
-      const image = req.files.image.data;
-      const encodedImg = image.toString("base64");
-      const imageBuffer = Buffer.from(encodedImg, "base64");
-      const blogInfo = {
-        title,
-        description,
-        subtitle1,
-        subDescription1,
-        subtitle2,
-        subDescription2,
-        subtitle3,
-        subDescription3,
-        subtitle4,
-        subDescription4,
-        blogType,
-        date,
-        likes,
-        comments,
-        photo: imageBuffer,
-      };
-      const result = await blogCollection.insertOne(blogInfo);
-      console.log(result);
-      res.send(result);
-    });
-    // get all doctor
-    app.get("/Blog", async (req, res) => {
-      const blog = blogCollection.find({});
-      const result = await blog.toArray();
-      res.send(result);
-    });
 
-    app.delete("/Blog/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await blogCollection.deleteOne(query);
-      res.send(result);
-    });
-    app.get("/Blog/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await blogCollection.findOne(query);
-      res.send(result);
-    });
-    /*======================================================
-                          blog Section End
-          ========================================================*/
-    /*======================================================
-                  Chat Section starts
-  ========================================================*/
-    // Chat App
-    app.post("/conversation", async (req, res) => {
-      const aaa = {
-        member: [req.body.member[0], req.body.member[1]],
+    // review section
+    app.post("/reviewAdd", async (req, res) => {
+      console.log(req.body);
+      const info = {
+        describe: req.body.describe,
+        rating: req.body.rating,
+        email: req.body.email,
+        time: new Date(),
+        displayName: req.body.displayName,
+        photoURL: req.body.photoURL,
       };
-      const result = await converssationCollection.insertOne(aaa);
+      const result = await reviewCollection.insertOne(info);
       res.send(result);
     });
-    app.get("/conversation/:id", async (req, res) => {
-      const result = await converssationCollection
-        .find({
-          member: { $in: [req.params.id] },
-        })
-        .toArray();
+    app.get("/reviewAdd", async (req, res) => {
+      const result = await reviewCollection.find({}).toArray();
       res.send(result);
-    });
-    app.get("/onlineFridGet/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const cursor = await userCollection.findOne(query);
-      res.send(cursor);
-    });
-    app.get("/conversatio/:acc", async (req, res) => {
-      const id = req.params.acc;
-      const query = { _id: ObjectId(id) };
-      const result = await converssationCollection.findOne(query);
-      res.send(result);
-    });
-    app.delete("/conversationDelete/:id", async (req, res) => {
-      const id = req.params.id;
-      console.log(id);
-      const query = { _id: ObjectId(id) };
-      const result = await converssationCollection.deleteOne(query);
-      res.send(result);
-    });
-    app.delete("/messageDelete/:id", async (req, res) => {
-      const id = req.params.id;
-      console.log(id);
-      const query = { _id: ObjectId(id) };
-      const result = await messageCollection.deleteOne(query);
-      res.send(result);
-    });
-    // message
-    app.post("/messages", async (req, res) => {
-      const aaa = {
-        converssationId: req.body.converssationId,
-        senderId: req.body.senderId,
-        text: req.body.text,
-        time: req.body.time,
-      };
-      const result = await messageCollection.insertOne(aaa);
-      res.send(result);
-    });
-
-    app.get("/messages/:Id", async (req, res) => {
-      const result = await messageCollection
-        .find({ converssationId: req.params.Id })
-        .toArray();
-      res.send(result);
-    });
-
-    app.get("/users/:email", async (req, res) => {
-      const cursor = userCollection.findOne({ email: req.params.email });
-      const users = await cursor;
-      res.send(users);
-    });
-    app.get("/getUsers/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const cursor = await userCollection.findOne(query);
-      res.send(cursor);
     });
 
     /*======================================================
