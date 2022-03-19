@@ -1168,6 +1168,26 @@ async function run() {
       res.json(donors);
     });
 
+    // update api blood request
+    app.put("/bloodRequest/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+      const query = { _id: ObjectId(id) };
+
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: updatedData.status,
+        },
+      };
+      const result = await bloodRequestsCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.json(result);
+    });
+
     /*======================================================
                     blood bank ends
     ========================================================*/
