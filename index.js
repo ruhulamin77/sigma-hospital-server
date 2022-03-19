@@ -1227,7 +1227,6 @@ async function run() {
         options
       );
       res.json(result);
-      console.log("hit donor update", result);
     });
 
     /*======================================================
