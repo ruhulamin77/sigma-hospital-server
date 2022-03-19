@@ -540,6 +540,7 @@ async function run() {
     })
     // comment add 
     app.put("/commentPut/:id", async (req, res) => {
+      console.log(req.body);
       const id = req.params.id;
       console.log(id);
 
