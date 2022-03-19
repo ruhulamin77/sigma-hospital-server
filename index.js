@@ -1205,11 +1205,11 @@ async function run() {
         updateDoc,
         options
       );
-      // console.log('updating user with id', result);
+      // console.log("updating user with id", result);
       res.json(result);
     });
 
-    // UPDATE API blood donation request
+    // update donors request
     app.put("/donors/:id", async (req, res) => {
       const id = req.params.id;
       const updatedData = req.body;
@@ -1227,6 +1227,7 @@ async function run() {
         options
       );
       res.json(result);
+      console.log("hit donor update", result);
     });
 
     /*======================================================
