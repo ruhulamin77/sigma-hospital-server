@@ -50,6 +50,7 @@ async function run() {
     const bloodDonationCollection = database.collection("bloodDonations");
     const donorsCollection = database.collection("donors");
     const reviewCollection = database.collection('review');
+    const emailCollection = database.collection('emailSub');
 
     //Costomer Order get api///
     app.get("/order", async (req, res) => {
@@ -577,6 +578,12 @@ async function run() {
       }
       console.log(quary);
     })
+
+    app.post("/emailSub", async (req, res) => {
+      console.log(req.body);
+      const result = await emailCollection.insertOne(req.body)
+      res.send(result)
+    })
     // 1st need this
     /*======================================================
                           blog Section End
@@ -602,7 +609,7 @@ async function run() {
     app.get("/onlineFridGet/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const cursor = await userCollection.findOne(query);
+      const cursor = await adminCollection.findOne(query);
       res.send(cursor);
     });
     app.get("/conversatio/:acc", async (req, res) => {
@@ -638,23 +645,29 @@ async function run() {
     })
 
     app.get('/messages/:Id', async (req, res) => {
-      console.log(req.params.Id);
-
       const result = await messageCollection.find({ converssationId: req.params.Id }).toArray()
       res.send(result)
     })
 
 
-    app.get('/users/:email', async (req, res) => {
-      const cursor = userCollection.findOne({ email: req.params.email });
+    app.get('/adminUser/:email', async (req, res) => {
+      console.log(req.params.email, "ok");
+      const cursor = adminCollection.findOne({ email: req.params.email });
       const users = await cursor;
+      console.log(users,"okk");
       res.send(users);
     });
     app.get('/getUsers/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const cursor = await userCollection.findOne(query);
+      const cursor = await adminCollection.findOne(query);
       res.send(cursor);
+    });
+
+    app.get("/adminUsers", async (req, res) => {
+      const cursor = adminCollection.find({});
+      const users = await cursor.toArray();
+      res.send(users);
     });
     /*======================================================
                     Nurse Section Ends
