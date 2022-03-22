@@ -966,9 +966,9 @@ async function run() {
       if (!admin) {
         return res
           .status(422)
-          .json({ error: "Sorry! This Doctor Doesn't Exists." });
+          .json({ error: "Sorry! This Member Doesn't Exists." });
       }
-      const match = await bcrypt.compare(passWord, admin.passWord);
+      const match = await bcrypt.compare(passWord, admin?.passWord);
       if (match) {
         const token = jwt.sign({ admin: admin._id }, secretPass);
         return res.status(201).json({
