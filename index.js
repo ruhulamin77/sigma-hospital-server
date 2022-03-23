@@ -112,7 +112,6 @@ async function run() {
         false
       ); //
       sslcommer.init(data).then((data) => {
-        console.log(req.body);
         if (data.GatewayPageURL) {
           res.json(data.GatewayPageURL);
         } else {
@@ -725,22 +724,8 @@ async function run() {
     // Medicine Api
     app.get("/medicine", async (req, res) => {
       const cursor = medicineCollection.find({});
-      // const medicine = await cursor.toArray();
-      const page = req.query.page;
-      const size = parseInt(req.query.size);
-      const count = await cursor.count();
-
-      let medicine;
-      if (page) {
-        medicine = await cursor
-          .skip(page * size)
-          .limit(size)
-          .toArray();
-      } else {
-        medicine = await cursor.toArray();
-      }
-
-      res.send({ count, medicine });
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
     /*======================================================
