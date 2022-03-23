@@ -297,6 +297,7 @@ async function run() {
     // get single appointments using doctor's email
     app.get("/appointments/:email", async (req, res) => {
       const email = req.params.email;
+      console.log(email);
       const query = { doctorEmail: email };
       const patientsInfo = appointmentCollection.find(query);
       const result = await patientsInfo.toArray();
@@ -351,17 +352,30 @@ async function run() {
       res.send(result);
     });
 
+    // get all prescription data
+    app.get("/prescriptions", async (req, res) => {
+      const allprescription = prescriptionCollection.find({});
+      const result = await allprescription.toArray();
+      res.send(result);
+    });
+
+    /*======================================================
+                        Prescription Section Ends
+        ========================================================*/
+    /*======================================================
+                        appointNurse Section starts
+    ========================================================*/
     // added nurse data to appointed for a patient
     app.put("/appointNurse/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
-      const nurseData = req.body;
+      const { nurseData, appointDate } = req.body;
       console.log("nurseData", nurseData);
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       const updateFile = {
         $set: {
-          appointNurse: nurseData,
+          nurseData: nurseData,
+          nurseApointDate: appointDate,
         },
       };
       const result = await prescriptionCollection.updateOne(
@@ -371,15 +385,8 @@ async function run() {
       );
       res.send(result);
     });
-
-    // get all prescription data
-    app.get("/prescriptions", async (req, res) => {
-      const allprescription = prescriptionCollection.find({});
-      const result = await allprescription.toArray();
-      res.send(result);
-    });
     /*======================================================
-                        Prescription Section Ends
+                        appointNurse Section Ends
         ========================================================*/
     /*======================================================
                         Nurse Section Starts
@@ -959,9 +966,9 @@ async function run() {
       if (!admin) {
         return res
           .status(422)
-          .json({ error: "Sorry! This Doctor Doesn't Exists." });
+          .json({ error: "Sorry! This Member Doesn't Exists." });
       }
-      const match = await bcrypt.compare(passWord, admin.passWord);
+      const match = await bcrypt.compare(passWord, admin?.passWord);
       if (match) {
         const token = jwt.sign({ admin: admin._id }, secretPass);
         return res.status(201).json({
