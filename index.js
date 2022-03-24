@@ -52,12 +52,6 @@ async function run() {
     const reviewCollection = database.collection('review');
     const emailCollection = database.collection('emailSub');
 
-
-
-    app.get("/commonity", async (req, res) => {
-      const result = await commonityCollection.find({}).toArray()
-      res.send(result)
-    })
     //Costomer Order get api///
     app.get("/order", async (req, res) => {
       const order = orderCollection.find({});
@@ -717,8 +711,8 @@ async function run() {
 
     app.get('/adminUser/:email', async (req, res) => {
       console.log(req.params.email, "ok");
-      const cursor = adminCollection.findOne({ email: req.params.email });
-      const users = await cursor;
+      const cursor = await adminCollection.findOne({ email: req.params.email });
+      const users =  cursor;
       console.log(users,"okk");
       res.send(users);
     });
@@ -991,9 +985,9 @@ async function run() {
       if (!admin) {
         return res
           .status(422)
-          .json({ error: "Sorry! This Member Doesn't Exists." });
+          .json({ error: "Sorry! This Doctor Doesn't Exists." });
       }
-      const match = await bcrypt.compare(passWord, admin?.passWord);
+      const match = await bcrypt.compare(passWord, admin.passWord);
       if (match) {
         const token = jwt.sign({ admin: admin._id }, secretPass);
         return res.status(201).json({
