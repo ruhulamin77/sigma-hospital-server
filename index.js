@@ -323,7 +323,6 @@ async function run() {
         patientLastName: patientLastName,
         patientAge: patientAge,
         patientGender: patientGender,
-        nurseData: []
       };
       const result = await prescriptionCollection.insertOne(
         patientPrescription
@@ -378,27 +377,22 @@ async function run() {
     // added nurse data to appointed for a patient
     app.put("/appointNurse/:id", async (req, res) => {
       const id = req.params.id;
-      // console.log(req.body.nurseData);
-      console.log(req.body, "nurseData");
+      const { nurseData, appointDate } = req.body;
+      console.log("nurseData", nurseData);
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
-      // const updateFile = {
-      //   $pull: {
-      //     nurseData: nurseData,
-      //   },
-      // };
-      const result = prescriptionCollection.findOneAndUpdate(
-        filter,
-        {
-          $pull: {
-            nurseData: req.body,
-          },
+      const updateFile = {
+        $set: {
+          nurseData: nurseData,
+          nurseApointDate: appointDate,
         },
+      };
+      const result = await prescriptionCollection.updateOne(
+        filter,
+        updateFile,
         options
       );
-      const ress = await result
-      console.log(ress, "resss");
-      res.send(ress);
+      res.send(result);
     });
     /*======================================================
                         appointNurse Section Ends
@@ -469,12 +463,6 @@ async function run() {
       res.send(result);
     });
 
-    // get all prescription data
-    app.get("/prescription", async (req, res) => {
-      const allprescription = prescriptionCollection.find({});
-      const result = await allprescription.toArray();
-      res.send(result);
-    });
     /*======================================================
                     Medicine Section Ends
     ========================================================*/
