@@ -368,6 +368,25 @@ async function run() {
       res.send(result);
     });
 
+    // admin acces to make pending to active
+    app.put('/patientAccess/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateFile = {
+        $set: {
+          status: "active"
+        },
+      };
+      const result = await appointmentCollection.updateOne(
+        query,
+        updateFile,
+        options
+      );
+      res.send(result);
+    })
+
     /*======================================================
                         Prescription Section Ends
         ========================================================*/
