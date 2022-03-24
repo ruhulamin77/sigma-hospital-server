@@ -314,7 +314,7 @@ async function run() {
         patientFirstName,
         patientLastName,
         patientAge,
-        patientGender, 
+        patientGender,
       } = req.body;
       const patientPrescription = {
         inputFields: inputFields,
@@ -323,7 +323,7 @@ async function run() {
         patientLastName: patientLastName,
         patientAge: patientAge,
         patientGender: patientGender,
-        nurseData:[]
+        nurseData: []
       };
       const result = await prescriptionCollection.insertOne(
         patientPrescription
@@ -360,6 +360,15 @@ async function run() {
       res.send(result);
     });
 
+    //delete specific patients
+    app.delete("/deletepatient/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await appointmentCollection.deleteOne(query);
+      res.send(result);
+    });
+
     /*======================================================
                         Prescription Section Ends
         ========================================================*/
@@ -370,7 +379,7 @@ async function run() {
     app.put("/appointNurse/:id", async (req, res) => {
       const id = req.params.id;
       // console.log(req.body.nurseData);
-      console.log( req.body,"nurseData");
+      console.log(req.body, "nurseData");
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       // const updateFile = {
@@ -388,7 +397,7 @@ async function run() {
         options
       );
       const ress = await result
-      console.log(ress,"resss");
+      console.log(ress, "resss");
       res.send(ress);
     });
     /*======================================================
@@ -711,8 +720,8 @@ async function run() {
     app.get('/adminUser/:email', async (req, res) => {
       console.log(req.params.email, "ok");
       const cursor = await adminCollection.findOne({ email: req.params.email });
-      const users =  cursor;
-      console.log(users,"okk");
+      const users = cursor;
+      console.log(users, "okk");
       res.send(users);
     });
     app.get("/getUsers/:id", async (req, res) => {
