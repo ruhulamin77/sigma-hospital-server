@@ -823,17 +823,6 @@ async function run() {
       res.send(cursor);
     });
 
-    // admin
-    // app.get('/getAllDoctor', async (req, res) => {
-    //   const cursor = await adminCollection.find({}).toArray();
-    //   res.send(cursor);
-    // });
-    // app.get('/getAllDoctor/:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: ObjectId(id) };
-    //   const cursor = await adminCollection.findOne(query);
-    //   res.send(cursor);
-    // });
 
     // review section
     app.post("/reviewAdd", async (req, res) => {
