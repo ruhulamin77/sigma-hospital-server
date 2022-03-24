@@ -133,14 +133,14 @@ async function run() {
         }
       );
       console.log(req.body.val_id);
-      res.redirect(`http://localhost:3000/dashboard/invoice`);
+      res.redirect(`https://sigmacare-hospital.netlify.app/dashboard/invoice`);
     });
     app.post("/fail", async (req, res) => {
-      res.status(400).redirect(`http://localhost:3000/order`);
+      res.status(400).redirect(`https://sigmacare-hospital.netlify.app/dashboard/Pharmacy`);
     });
 
     app.post("/cancel", async (req, res) => {
-      res.status(200).redirect(`http://localhost:3000/home`);
+      res.status(200).redirect(`https://sigmacare-hospital.netlify.app/home`);
     });
 
     /*======================================================
