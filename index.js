@@ -359,6 +359,23 @@ async function run() {
       res.send(result);
     });
 
+    //post medical test for patients
+    app.put('/medicalTest/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const medicalTest = req.body;
+      console.log(medicalTest);
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const medicalTestData = {
+        $set: { medicalTest: medicalTest }
+      };
+      const result = await prescriptionCollection.updateOne(
+        filter, medicalTestData, options
+      );
+      res.send(result);
+    })
+
     //delete specific patients
     app.delete("/deletepatient/:id", async (req, res) => {
       const id = req.params.id;
