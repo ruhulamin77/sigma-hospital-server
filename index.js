@@ -133,14 +133,14 @@ async function run() {
         }
       );
       console.log(req.body.val_id);
-      res.redirect(`http://localhost:3000/dashboard/invoice`);
+      res.redirect(`https://sigmacare-hospital.netlify.app/dashboard/invoice`);
     });
     app.post("/fail", async (req, res) => {
-      res.status(400).redirect(`http://localhost:3000/order`);
+      res.status(400).redirect(`https://sigmacare-hospital.netlify.app/dashboard/Pharmacy`);
     });
 
     app.post("/cancel", async (req, res) => {
-      res.status(200).redirect(`http://localhost:3000/home`);
+      res.status(200).redirect(`https://sigmacare-hospital.netlify.app/home`);
     });
 
     /*======================================================
@@ -314,7 +314,7 @@ async function run() {
         patientFirstName,
         patientLastName,
         patientAge,
-        patientGender, 
+        patientGender,
       } = req.body;
       const patientPrescription = {
         inputFields: inputFields,
@@ -323,7 +323,6 @@ async function run() {
         patientLastName: patientLastName,
         patientAge: patientAge,
         patientGender: patientGender,
-        nurseData:[]
       };
       const result = await prescriptionCollection.insertOne(
         patientPrescription
@@ -360,6 +359,51 @@ async function run() {
       res.send(result);
     });
 
+    //post medical test for patients
+    app.put('/medicalTest/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const medicalTest = req.body;
+      console.log(medicalTest);
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const medicalTestData = {
+        $set: { medicalTest: medicalTest }
+      };
+      const result = await prescriptionCollection.updateOne(
+        filter, medicalTestData, options
+      );
+      res.send(result);
+    })
+
+    //delete specific patients
+    app.delete("/deletepatient/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await appointmentCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // admin acces to make pending to active
+    app.put('/patientAccess/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateFile = {
+        $set: {
+          status: "active"
+        },
+      };
+      const result = await appointmentCollection.updateOne(
+        query,
+        updateFile,
+        options
+      );
+      res.send(result);
+    })
+
     /*======================================================
                         Prescription Section Ends
         ========================================================*/
@@ -369,27 +413,22 @@ async function run() {
     // added nurse data to appointed for a patient
     app.put("/appointNurse/:id", async (req, res) => {
       const id = req.params.id;
-      // console.log(req.body.nurseData);
-      console.log( req.body,"nurseData");
+      const { nurseData, appointDate } = req.body;
+      console.log("nurseData", nurseData);
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
-      // const updateFile = {
-      //   $pull: {
-      //     nurseData: nurseData,
-      //   },
-      // };
-      const result = prescriptionCollection.findOneAndUpdate(
-        filter,
-        {
-          $pull: {
-            nurseData: req.body,
-          },
+      const updateFile = {
+        $set: {
+          nurseData: nurseData,
+          nurseApointDate: appointDate,
         },
+      };
+      const result = await prescriptionCollection.updateOne(
+        filter,
+        updateFile,
         options
       );
-      const ress = await result
-      console.log(ress,"resss");
-      res.send(ress);
+      res.send(result);
     });
     /*======================================================
                         appointNurse Section Ends
@@ -460,12 +499,6 @@ async function run() {
       res.send(result);
     });
 
-    // get all prescription data
-    app.get("/prescription", async (req, res) => {
-      const allprescription = prescriptionCollection.find({});
-      const result = await allprescription.toArray();
-      res.send(result);
-    });
     /*======================================================
                     Medicine Section Ends
     ========================================================*/
@@ -711,8 +744,8 @@ async function run() {
     app.get('/adminUser/:email', async (req, res) => {
       console.log(req.params.email, "ok");
       const cursor = await adminCollection.findOne({ email: req.params.email });
-      const users =  cursor;
-      console.log(users,"okk");
+      const users = cursor;
+      console.log(users, "okk");
       res.send(users);
     });
     app.get("/getUsers/:id", async (req, res) => {
