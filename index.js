@@ -308,22 +308,16 @@ async function run() {
     app.post("/prescriptions", async (req, res) => {
       const prescription = req.body;
       console.log(prescription);
-      const {
-        inputFields,
-        doctorName,
-        patientFirstName,
-        patientLastName,
-        patientAge,
-        patientGender,
-      } = req.body;
       const patientPrescription = {
-        inputFields: inputFields,
-        doctorName: doctorName,
-        patientFirstName: patientFirstName,
-        patientLastName: patientLastName,
-        patientAge: patientAge,
-        patientGender: patientGender,
+        inputFields: prescription?.inputFields,
+        doctorName: prescription?.doctorName,
+        patientFirstName: prescription?.patientFirstName,
+        patientLastName: prescription?.patientLastName,
+        patientAge: prescription?.patientAge,
+        patientGender: prescription?.patientGender,
+        nurseData: []
       };
+      console.log(patientPrescription);
       const result = await prescriptionCollection.insertOne(
         patientPrescription
       );
@@ -407,95 +401,49 @@ async function run() {
     /*======================================================
                         Prescription Section Ends
         ========================================================*/
+
     /*======================================================
-                        appointNurse Section starts
-    ========================================================*/
+                        Nurse Section Starts
+        ========================================================*/
+
     // added nurse data to appointed for a patient
     app.put("/appointNurse/:id", async (req, res) => {
       const id = req.params.id;
-      const { nurseData, appointDate } = req.body;
-      console.log("nurseData", nurseData);
+      console.log(id, "id");
+      const appointedNurse = req.body;
+      console.log("appointedNurse", appointedNurse);
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       const updateFile = {
-        $set: {
-          nurseData: nurseData,
-          nurseApointDate: appointDate,
-        },
+        $push:
+        {
+          nurseData:
+          {
+            nurseData: appointedNurse?.nurseData,
+            nurseApointDate: appointedNurse?.appointDate,
+          },
+        }
       };
-      const result = await prescriptionCollection.updateOne(
+      const result = await prescriptionCollection.findOneAndUpdate(
         filter,
         updateFile,
         options
       );
       res.send(result);
     });
-    /*======================================================
-                        appointNurse Section Ends
-        ========================================================*/
-    /*======================================================
-                        Nurse Section Starts
-        ========================================================*/
-    // nurse section start
-    app.post("/addNurse", async (req, res) => {
-      console.log(req.body);
-      console.log(req.files);
-      const { name, description, day, time, shift, email, phone, gender } =
-        req.body;
-      const image = req.files.image.data;
-      const encodedImg = image.toString("base64");
-      const imageBuffer = Buffer.from(encodedImg, "base64");
 
-      const doctorInfo = {
-        name,
-        description,
-        day,
-        time,
-        shift,
-        email,
-        phone,
-        gender,
-        photo: imageBuffer,
-      };
-      const result = await nurseCollection.insertOne(doctorInfo);
-      res.send(result);
-    });
+    // get all nurse data
     app.get("/nurses", async (req, res) => {
       const nurse = nurseCollection.find({});
       const result = await nurse.toArray();
       res.send(result);
     });
+
+    //delete single nurse data
     app.delete("/nurses/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await nurseCollection.deleteOne(query);
-      res.send(result);
-    });
-    app.put("/updateNurse/:id", async (req, res) => {
-      console.log("body", req.body);
-      const id = req.params.id;
-      const { name, description, day, time, shift, email, phone, gender } =
-        req.body;
-
-      const filter = { _id: ObjectId(id) };
-      const options = { upsert: true };
-      const updateFile = {
-        $set: {
-          name: name,
-          description: description,
-          day: day,
-          time: time,
-          shift: shift,
-          email: email,
-          phone: phone,
-          gender: gender,
-        },
-      };
-      const result = await nurseCollection.updateOne(
-        filter,
-        updateFile,
-        options
-      );
       res.send(result);
     });
 
