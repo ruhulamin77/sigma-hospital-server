@@ -52,7 +52,7 @@ async function run() {
     const reviewCollection = database.collection('review');
     const emailCollection = database.collection('emailSub');
 
-    //Costomer Order get api///
+    //Customer Order get api///
     app.get('/order', async (req, res) => {
       const order = orderCollection.find({});
       const result = await order.toArray();
