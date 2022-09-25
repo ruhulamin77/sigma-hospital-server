@@ -221,7 +221,7 @@ async function run() {
         birthday,
         gender,
         phone,
-        speciality,
+        specgit iality,
         email,
         twitter,
         linkedin,
